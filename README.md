@@ -1,5 +1,9 @@
 # Jules Ruby
 
+<p align="center">
+  <img src="assets/banner.png" alt="Jules Ruby" width="600">
+</p>
+
 A Ruby gem for interacting with the [Jules API](https://developers.google.com/jules/api) to programmatically create and manage asynchronous coding tasks.
 
 ## Installation
