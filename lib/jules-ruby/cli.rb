@@ -2,14 +2,53 @@
 
 require 'thor'
 require_relative 'cli/interactive'
+require_relative 'cli/prompts'
 
 module JulesRuby
   # Command-line interface for jules-ruby
   class CLI < Thor
+    package_name 'jules-ruby'
+
     class_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
 
     def self.exit_on_failure?
       true
+    end
+
+    def self.help(shell, subcommand = false)
+      Prompts.print_banner
+
+      shell.say <<~BANNER
+        QUICK START EXAMPLES:
+
+          # Start interactive mode (default)
+          $ jules-ruby
+
+          # List your connected repositories
+          $ jules-ruby sources list
+
+          # Create a new coding session
+          $ jules-ruby sessions create --source=sources/github/owner/repo --prompt="Fix the login bug"
+
+          # Create a session with prompt from file
+          $ jules-ruby sessions create --source=sources/github/owner/repo --prompt-file=./task.md
+
+          # List all sessions
+          $ jules-ruby sessions list
+
+          # View session activities
+          $ jules-ruby activities list SESSION_ID
+
+          # Approve a session's plan
+          $ jules-ruby sessions approve SESSION_ID
+
+        CONFIGURATION:
+
+          Set your API key via environment variable:
+          $ export JULES_API_KEY=your_api_key
+
+      BANNER
+      super
     end
 
     desc 'interactive', 'Start interactive mode'
@@ -21,10 +60,31 @@ module JulesRuby
     default_command :interactive
 
     desc 'sources SUBCOMMAND', 'Manage sources (connected repositories)'
+    long_desc <<~LONGDESC
+      Manage connected GitHub repositories (sources).
+
+      Examples:
+
+        # List all connected repositories
+        $ jules-ruby sources list
+
+        # Show details for a specific source
+        $ jules-ruby sources show sources/github/owner/repo
+
+        # Output as JSON
+        $ jules-ruby sources list --format=json
+    LONGDESC
     subcommand 'sources', Class.new(Thor) {
       class_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
 
       desc 'list', 'List all connected repositories'
+      long_desc <<~LONGDESC
+        List all GitHub repositories connected to your Jules account.
+
+        Examples:
+          $ jules-ruby sources list
+          $ jules-ruby sources list --format=json
+      LONGDESC
       def list
         sources = client.sources.all
         if options[:format] == 'json'
@@ -37,6 +97,12 @@ module JulesRuby
       end
 
       desc 'show NAME', 'Show details for a source'
+      long_desc <<~LONGDESC
+        Show details for a specific source.
+
+        Example:
+          $ jules-ruby sources show sources/github/owner/repo
+      LONGDESC
       def show(name)
         source = client.sources.find(name)
         if options[:format] == 'json'
@@ -82,6 +148,26 @@ module JulesRuby
     }
 
     desc 'sessions SUBCOMMAND', 'Manage coding sessions'
+    long_desc <<~LONGDESC
+      Manage Jules coding sessions.
+
+      Examples:
+
+        # List all sessions
+        $ jules-ruby sessions list
+
+        # Show session details
+        $ jules-ruby sessions show SESSION_ID
+
+        # Create a session with inline prompt
+        $ jules-ruby sessions create --source=sources/github/owner/repo --prompt="Fix the login bug"
+
+        # Create a session with prompt from file
+        $ jules-ruby sessions create --source=sources/github/owner/repo --prompt-file=./task.md
+
+        # Create a session with auto-PR
+        $ jules-ruby sessions create --source=sources/github/owner/repo --prompt="Add tests" --auto-pr
+    LONGDESC
     subcommand 'sessions', Class.new(Thor) {
       class_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
 
@@ -110,19 +196,40 @@ module JulesRuby
       end
 
       desc 'create', 'Create a new session'
+      long_desc <<~LONGDESC
+        Create a new Jules coding session.
+
+        You must provide a prompt either inline with --prompt or from a file with --prompt-file.
+        If both are provided, --prompt-file takes precedence.
+
+        Examples:
+
+          # Create with inline prompt
+          $ jules-ruby sessions create --source=sources/github/owner/repo --prompt="Fix the login bug"
+
+          # Create with prompt from file
+          $ jules-ruby sessions create --source=sources/github/owner/repo --prompt-file=./task-instructions.md
+
+          # Create with custom branch and auto-PR
+          $ jules-ruby sessions create --source=sources/github/owner/repo --branch=develop --prompt="Add tests" --auto-pr
+      LONGDESC
       option :source, required: true, desc: 'Source name (e.g., sources/github/owner/repo)'
       option :branch, default: 'main', desc: 'Starting branch'
-      option :prompt, required: true, desc: 'Task prompt'
+      option :prompt, desc: 'Task prompt (inline text)'
+      option :prompt_file, desc: 'Path to file containing task prompt'
       option :title, desc: 'Session title'
       option :auto_pr, type: :boolean, default: false, desc: 'Auto-create PR when done'
       def create
+        prompt_text = resolve_prompt
+        raise Thor::Error, 'You must provide --prompt or --prompt-file' if prompt_text.nil? || prompt_text.strip.empty?
+
         source_context = {
           'source' => options[:source],
           'githubRepoContext' => { 'startingBranch' => options[:branch] }
         }
 
         params = {
-          prompt: options[:prompt],
+          prompt: prompt_text,
           source_context: source_context
         }
         params[:title] = options[:title] if options[:title]
@@ -137,6 +244,12 @@ module JulesRuby
       end
 
       desc 'approve ID', 'Approve the plan for a session'
+      long_desc <<~LONGDESC
+        Approve the generated plan for a session.
+
+        Example:
+          $ jules-ruby sessions approve SESSION_ID
+      LONGDESC
       def approve(id)
         session = client.sessions.approve_plan(id)
         puts "Plan approved for session: #{session.name}"
@@ -146,6 +259,12 @@ module JulesRuby
       end
 
       desc 'message ID', 'Send a message to a session'
+      long_desc <<~LONGDESC
+        Send a message to an existing session.
+
+        Examples:
+          $ jules-ruby sessions message SESSION_ID --prompt="Please also add unit tests"
+      LONGDESC
       option :prompt, required: true, desc: 'Message to send'
       def message(id)
         session = client.sessions.send_message(id, prompt: options[:prompt])
@@ -164,6 +283,17 @@ module JulesRuby
       end
 
       private
+
+      def resolve_prompt
+        if options[:prompt_file]
+          file_path = File.expand_path(options[:prompt_file])
+          raise Thor::Error, "Prompt file not found: #{file_path}" unless File.exist?(file_path)
+
+          File.read(file_path)
+        else
+          options[:prompt]
+        end
+      end
 
       def client
         @client ||= JulesRuby::Client.new
@@ -217,10 +347,30 @@ module JulesRuby
     }
 
     desc 'activities SUBCOMMAND', 'View session activities'
+    long_desc <<~LONGDESC
+      View activities (messages, plans, progress) for Jules sessions.
+
+      Examples:
+
+        # List all activities for a session
+        $ jules-ruby activities list SESSION_ID
+
+        # Show details for a specific activity
+        $ jules-ruby activities show sessions/SESSION_ID/activities/ACTIVITY_ID
+
+        # Output as JSON
+        $ jules-ruby activities list SESSION_ID --format=json
+    LONGDESC
     subcommand 'activities', Class.new(Thor) {
       class_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
 
       desc 'list SESSION_ID', 'List activities for a session'
+      long_desc <<~LONGDESC
+        List all activities for a session (messages, plans, progress updates).
+
+        Example:
+          $ jules-ruby activities list SESSION_ID
+      LONGDESC
       def list(session_id)
         activities = client.activities.all(session_id)
         if options[:format] == 'json'
@@ -233,6 +383,12 @@ module JulesRuby
       end
 
       desc 'show NAME', 'Show details for an activity'
+      long_desc <<~LONGDESC
+        Show details for a specific activity.
+
+        Example:
+          $ jules-ruby activities show sessions/SESSION_ID/activities/ACTIVITY_ID
+      LONGDESC
       def show(name)
         activity = client.activities.find(name)
         if options[:format] == 'json'

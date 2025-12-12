@@ -5,6 +5,10 @@ require_relative 'prompts'
 module JulesRuby
   # Interactive mode for jules-ruby CLI
   class Interactive
+    # States that should trigger auto-refresh
+    AUTO_REFRESH_STATES = %w[PLANNING IN_PROGRESS QUEUED].freeze
+    AUTO_REFRESH_INTERVAL = 60 # seconds
+
     def initialize
       @client = JulesRuby::Client.new
       @prompt = Prompts.prompt
@@ -18,12 +22,28 @@ module JulesRuby
       text.gsub(/(.{1,#{width}})(\s+|$)/, "\\1\n").strip
     end
 
+    # Select action with auto-refresh for active sessions
+    # Returns the selected action or :refresh if timeout expires
+    def select_with_auto_refresh(choices, session)
+      if AUTO_REFRESH_STATES.include?(session.state)
+        puts "  ⏱️  Auto-refresh in #{AUTO_REFRESH_INTERVAL}s (press any key for menu)"
+        puts
+        key = @prompt.keypress(timeout: AUTO_REFRESH_INTERVAL)
+        return :refresh unless key
+
+        # User pressed a key, show normal menu
+        @prompt.select('Action:', choices, cycle: true)
+      else
+        @prompt.select('Action:', choices, cycle: true)
+      end
+    end
+
     public
 
     def start
       loop do
         Prompts.clear_screen
-        Prompts.header('Jules Ruby CLI')
+        Prompts.print_banner
 
         choice = @prompt.select('What would you like to do?', cycle: true) do |menu|
           menu.choice 'Create new session', :create_session
@@ -48,7 +68,7 @@ module JulesRuby
 
     def create_session_wizard
       Prompts.clear_screen
-      Prompts.header('Create New Session')
+      Prompts.print_banner
 
       # Step 1: Select source
       sources = Prompts.with_spinner('Loading sources...') do
@@ -125,7 +145,7 @@ module JulesRuby
     def view_sessions
       loop do
         Prompts.clear_screen
-        Prompts.header('Your Sessions')
+        Prompts.print_banner
 
         sessions = Prompts.with_spinner('Loading sessions...') do
           @client.sessions.all
@@ -165,9 +185,11 @@ module JulesRuby
 
       loop do
         Prompts.clear_screen
-        emoji = Prompts.state_emoji(session.state)
-        Prompts.header("#{session.title || 'Session'} #{emoji}")
+        Prompts.print_banner
 
+        puts "  📋 #{session.title || 'Session Details'} #{Prompts.state_emoji(session.state)}"
+        puts "  #{'─' * 50}"
+        puts
         puts "  ID:      #{session.id}"
         puts "  State:   #{Prompts.state_label(session.state)}"
         puts "  Prompt:  #{session.prompt&.slice(0, 60)}#{'...' if session.prompt && session.prompt.length > 60}"
@@ -178,11 +200,14 @@ module JulesRuby
         # Fetch latest activity only when needed
         if needs_activity_fetch
           begin
-            result = Prompts.with_spinner('Loading latest activity...') do
-              @client.activities.list(session.name, page_size: 1)
+            activities = Prompts.with_spinner('Loading latest activity...') do
+              # API returns activities in chronological order (oldest first),
+              # so we need to fetch all and take the last one to get the latest
+              @client.activities.all(session.name)
             end
-            latest_activity = result[:activities]&.first
+            latest_activity = activities&.last
           rescue StandardError
+            # Session may be newly created with no activities yet, or API error
             latest_activity = nil
           end
           needs_activity_fetch = false
@@ -226,7 +251,7 @@ module JulesRuby
         choices << { name: '🔄 Refresh', value: :refresh }
         choices << { name: '← Back', value: :back }
 
-        action = @prompt.select('Action:', choices, cycle: true)
+        action = select_with_auto_refresh(choices, session)
 
         case action
         when :approve
@@ -275,7 +300,7 @@ module JulesRuby
 
     def view_activities(session)
       Prompts.clear_screen
-      Prompts.header("Activities for #{session.title || session.id}")
+      Prompts.print_banner
 
       activities = Prompts.with_spinner('Loading activities...') do
         @client.activities.all(session.name)
@@ -325,7 +350,7 @@ module JulesRuby
 
     def browse_sources
       Prompts.clear_screen
-      Prompts.header('Connected Repositories')
+      Prompts.print_banner
 
       sources = Prompts.with_spinner('Loading sources...') do
         @client.sources.all

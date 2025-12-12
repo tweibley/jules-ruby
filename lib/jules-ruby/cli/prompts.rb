@@ -2,6 +2,7 @@
 
 require 'tty-prompt'
 require 'tty-spinner'
+require_relative 'banner'
 
 module JulesRuby
   # Helper methods for interactive prompts
@@ -119,6 +120,10 @@ module JulesRuby
         puts "  🚀 #{title}"
         puts "  #{'─' * 50}"
         puts
+      end
+
+      def print_banner
+        Banner.print_banner
       end
     end
   end
