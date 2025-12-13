@@ -1,3 +1,4 @@
+# rubocop:disable Naming/FileName
 # frozen_string_literal: true
 
 require 'spec_helper'
@@ -55,3 +56,4 @@ RSpec.describe JulesRuby::Configuration do
     end
   end
 end
+# rubocop:enable Naming/FileName

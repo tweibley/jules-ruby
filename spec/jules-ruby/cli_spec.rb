@@ -227,7 +227,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when no sources exist' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sources')
-            .to_return(status: 200, body: { 'sources' => [] }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200, body: { 'sources' => [] }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays no sources found message' do
@@ -239,7 +240,9 @@ RSpec.describe JulesRuby::CLI do
       context 'when source has no github_repo' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sources')
-            .to_return(status: 200, body: { 'sources' => [{ 'name' => 'sources/other/source' }] }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200,
+                       body: { 'sources' => [{ 'name' => 'sources/other/source' }] }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays N/A for repository name' do
@@ -271,7 +274,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when source has no github_repo' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sources/other/source')
-            .to_return(status: 200, body: { 'name' => 'sources/other/source' }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200, body: { 'name' => 'sources/other/source' }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays only basic info' do
@@ -287,7 +291,8 @@ RSpec.describe JulesRuby::CLI do
     describe 'error handling' do
       before do
         stub_request(:get, 'https://jules.googleapis.com/v1alpha/sources/nonexistent')
-          .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+          .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
       end
 
       it 'outputs JSON error when format is json' do
@@ -310,7 +315,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when list fails' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sources')
-            .to_return(status: 500, body: { 'error' => { 'message' => 'Server error' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 500, body: { 'error' => { 'message' => 'Server error' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs JSON error for list' do
@@ -346,7 +352,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when no sessions exist' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
-            .to_return(status: 200, body: { 'sessions' => [] }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200, body: { 'sessions' => [] }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays no sessions found message' do
@@ -358,8 +365,12 @@ RSpec.describe JulesRuby::CLI do
       context 'when session has no title' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
-            .to_return(status: 200, body: { 'sessions' => [{ 'name' => 'sessions/abc', 'state' => 'ACTIVE',
-                                                             'prompt' => 'A very long prompt that exceeds twenty-eight characters' }] }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200,
+                       body: { 'sessions' => [{ 'name' => 'sessions/abc', 'state' => 'ACTIVE',
+                                                'prompt' => 'A very long prompt that exceeds ' \
+                                                            'twenty-eight characters' }] }
+                               .to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays truncated prompt as title' do
@@ -371,8 +382,10 @@ RSpec.describe JulesRuby::CLI do
       context 'when session has no update_time' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
-            .to_return(status: 200, body: { 'sessions' => [{ 'name' => 'sessions/abc', 'title' => 'Test',
-                                                             'state' => 'ACTIVE' }] }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200,
+                       body: { 'sessions' => [{ 'name' => 'sessions/abc', 'title' => 'Test',
+                                                'state' => 'ACTIVE' }] }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays N/A for updated time' do
@@ -400,7 +413,8 @@ RSpec.describe JulesRuby::CLI do
       context 'with outputs' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions/abc123')
-            .to_return(status: 200, body: session_with_outputs_response.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200, body: session_with_outputs_response.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays PR outputs' do
@@ -540,7 +554,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when API fails' do
         before do
           stub_request(:post, 'https://jules.googleapis.com/v1alpha/sessions')
-            .to_return(status: 400, body: { 'error' => { 'message' => 'Bad request' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 400, body: { 'error' => { 'message' => 'Bad request' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs error' do
@@ -573,7 +588,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when API fails' do
         before do
           stub_request(:post, 'https://jules.googleapis.com/v1alpha/sessions/abc123:approvePlan')
-            .to_return(status: 400, body: { 'error' => { 'message' => 'Bad request' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 400, body: { 'error' => { 'message' => 'Bad request' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs error' do
@@ -602,7 +618,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when API fails' do
         before do
           stub_request(:post, 'https://jules.googleapis.com/v1alpha/sessions/abc123:sendMessage')
-            .to_return(status: 400, body: { 'error' => { 'message' => 'Bad request' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 400, body: { 'error' => { 'message' => 'Bad request' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs error' do
@@ -631,7 +648,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when API fails' do
         before do
           stub_request(:delete, 'https://jules.googleapis.com/v1alpha/sessions/abc123')
-            .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs error' do
@@ -647,7 +665,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when list fails with JSON format' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
-            .to_return(status: 500, body: { 'error' => { 'message' => 'Server error' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 500, body: { 'error' => { 'message' => 'Server error' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs JSON error' do
@@ -664,7 +683,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when show fails with JSON format' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions/notfound')
-            .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs JSON error' do
@@ -699,7 +719,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when no activities exist' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions/abc123/activities')
-            .to_return(status: 200, body: { 'activities' => [] }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200, body: { 'activities' => [] }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays no activities found message' do
@@ -741,8 +762,10 @@ RSpec.describe JulesRuby::CLI do
       context 'with nil originator' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions/abc123/activities')
-            .to_return(status: 200, body: { 'activities' => [{ 'name' => 'a1',
-                                                               'activityType' => 'SESSION_COMPLETED' }] }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 200,
+                       body: { 'activities' => [{ 'name' => 'a1',
+                                                  'activityType' => 'SESSION_COMPLETED' }] }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'displays N/A for originator' do
@@ -921,7 +944,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when list fails' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions/notfound/activities')
-            .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs JSON error when format is json' do
@@ -945,7 +969,8 @@ RSpec.describe JulesRuby::CLI do
       context 'when show fails' do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions/abc123/activities/notfound')
-            .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json, headers: { 'Content-Type' => 'application/json' })
+            .to_return(status: 404, body: { 'error' => { 'message' => 'Not found' } }.to_json,
+                       headers: { 'Content-Type' => 'application/json' })
         end
 
         it 'outputs JSON error when format is json' do

@@ -317,8 +317,13 @@ RSpec.describe JulesRuby::Interactive do
       it 'handles activities with missing data' do
         incomplete_message = instance_double(JulesRuby::Models::Activity, type: :user_messaged,
                                                                           create_time: Time.now.iso8601, message: nil)
-        incomplete_progress = instance_double(JulesRuby::Models::Activity, type: :progress_updated,
-                                                                           create_time: Time.now.iso8601, progress_title: 'Title', progress_description: nil)
+        incomplete_progress = instance_double(
+          JulesRuby::Models::Activity,
+          type: :progress_updated,
+          create_time: Time.now.iso8601,
+          progress_title: 'Title',
+          progress_description: nil
+        )
         incomplete_plan = instance_double(JulesRuby::Models::Activity, type: :plan_generated,
                                                                        create_time: Time.now.iso8601, plan: nil)
 
