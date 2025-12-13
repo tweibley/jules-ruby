@@ -11,6 +11,10 @@ end
 require 'jules-ruby'
 require 'webmock/rspec'
 
+# Suppress async gem warnings during tests (they occur when testing error responses)
+require 'console'
+Console.logger.off!
+
 RSpec.configure do |config|
   config.example_status_persistence_file_path = '.rspec_status'
   config.disable_monkey_patching!
