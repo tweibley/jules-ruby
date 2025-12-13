@@ -1,5 +1,15 @@
 # frozen_string_literal: true
 
+require 'simplecov'
+SimpleCov.start do
+  add_filter '/spec/'
+  add_filter '/lib/jules-ruby/cli.rb'
+  add_filter '/lib/jules-ruby/cli/'
+  enable_coverage :branch
+  # 99% threshold accounts for 3 unreachable defensive code lines
+  minimum_coverage line: 99
+end
+
 require 'jules-ruby'
 require 'webmock/rspec'
 

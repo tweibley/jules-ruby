@@ -5,40 +5,177 @@ require 'spec_helper'
 RSpec.describe JulesRuby::Client do
   let(:client) { described_class.new }
 
-  describe '#initialize' do
-    it 'uses global configuration by default' do
-      JulesRuby.configure { |c| c.api_key = 'global_key' }
-      client = described_class.new
-      expect(client.configuration.api_key).to eq('global_key')
+  describe 'HTTP error handling' do
+    it 'raises BadRequestError on 400' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 400, body: '{"error": "bad request"}')
+
+      expect { client.get('/sessions') }.to raise_error(JulesRuby::BadRequestError)
     end
 
-    it 'allows overriding api_key' do
-      client = described_class.new(api_key: 'override_key')
-      expect(client.configuration.api_key).to eq('override_key')
+    it 'raises AuthenticationError on 401' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 401, body: '{"error": "unauthorized"}')
+
+      expect { client.get('/sessions') }.to raise_error(JulesRuby::AuthenticationError)
     end
 
-    it 'raises ConfigurationError when api_key is missing' do
-      JulesRuby.reset_configuration!
-      JulesRuby.configuration.api_key = nil
-      expect { described_class.new }.to raise_error(JulesRuby::ConfigurationError)
+    it 'raises ForbiddenError on 403' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 403, body: '{"error": "forbidden"}')
+
+      expect { client.get('/sessions') }.to raise_error(JulesRuby::ForbiddenError)
+    end
+
+    it 'raises NotFoundError on 404' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions/notfound')
+        .to_return(status: 404, body: '{"error": "not found"}')
+
+      expect { client.get('/sessions/notfound') }.to raise_error(JulesRuby::NotFoundError)
+    end
+
+    it 'raises RateLimitError on 429' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 429, body: '{"error": "rate limited"}')
+
+      expect { client.get('/sessions') }.to raise_error(JulesRuby::RateLimitError)
+    end
+
+    it 'raises ServerError on 500' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 500, body: '{"error": "server error"}')
+
+      expect { client.get('/sessions') }.to raise_error(JulesRuby::ServerError)
+    end
+
+    it 'raises ServerError on 503' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 503, body: '{"error": "service unavailable"}')
+
+      expect { client.get('/sessions') }.to raise_error(JulesRuby::ServerError)
+    end
+
+    it 'raises Error on unexpected status codes' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 418, body: 'I am a teapot')
+
+      expect { client.get('/sessions') }.to raise_error(JulesRuby::Error)
     end
   end
 
-  describe 'resource accessors' do
-    it 'provides sources resource' do
-      expect(client.sources).to be_a(JulesRuby::Resources::Sources)
+  describe '#post' do
+    before do
+      stub_request(:post, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 200, body: '{"name": "sessions/123"}', headers: { 'Content-Type' => 'application/json' })
     end
 
-    it 'provides sessions resource' do
-      expect(client.sessions).to be_a(JulesRuby::Resources::Sessions)
+    it 'makes POST requests' do
+      result = client.post('/sessions', body: { prompt: 'test' })
+      expect(result['name']).to eq('sessions/123')
+    end
+  end
+
+  describe '#delete' do
+    before do
+      stub_request(:delete, 'https://jules.googleapis.com/v1alpha/sessions/123')
+        .to_return(status: 204, body: nil)
     end
 
-    it 'provides activities resource' do
-      expect(client.activities).to be_a(JulesRuby::Resources::Activities)
+    it 'makes DELETE requests' do
+      result = client.delete('/sessions/123')
+      expect(result).to eq({})
+    end
+  end
+
+  describe 'URL building' do
+    it 'handles paths without leading slash' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .to_return(status: 200, body: '{}')
+
+      result = client.get('sessions')
+      expect(result).to eq({})
     end
 
-    it 'memoizes resource instances' do
-      expect(client.sources).to be(client.sources)
+    it 'handles query params' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .with(query: { pageSize: 10 })
+        .to_return(status: 200, body: '{}')
+
+      result = client.get('/sessions', params: { pageSize: 10 })
+      expect(result).to eq({})
+    end
+  end
+
+  describe 'configuration overrides' do
+    it 'allows overriding base_url' do
+      custom_client = described_class.new(base_url: 'https://custom.example.com/v1')
+
+      stub_request(:get, 'https://custom.example.com/v1/sessions')
+        .to_return(status: 200, body: '{}')
+
+      result = custom_client.get('/sessions')
+      expect(result).to eq({})
+    end
+
+    it 'allows overriding timeout' do
+      custom_client = described_class.new(timeout: 120)
+      expect(custom_client.configuration.timeout).to eq(120)
+    end
+  end
+end
+
+RSpec.describe JulesRuby::Error do
+  it 'stores response and status_code' do
+    error = JulesRuby::Error.new('test', response: 'body', status_code: 500)
+    expect(error.message).to eq('test')
+    expect(error.response).to eq('body')
+    expect(error.status_code).to eq(500)
+  end
+end
+
+RSpec.describe JulesRuby::Configuration do
+  describe '#valid?' do
+    it 'returns true when api_key is present' do
+      config = JulesRuby::Configuration.new
+      config.api_key = 'test'
+      expect(config.valid?).to be true
+    end
+
+    it 'returns false when api_key is nil' do
+      JulesRuby.reset_configuration!
+      config = JulesRuby::Configuration.new
+      config.api_key = nil
+      expect(config.valid?).to be false
+    end
+
+    it 'returns false when api_key is empty' do
+      config = JulesRuby::Configuration.new
+      config.api_key = ''
+      expect(config.valid?).to be false
+    end
+  end
+end
+
+RSpec.describe JulesRuby do
+  describe '.configure' do
+    it 'returns configuration without block' do
+      config = JulesRuby.configure
+      expect(config).to be_a(JulesRuby::Configuration)
+    end
+
+    it 'yields configuration with block' do
+      JulesRuby.configure do |c|
+        c.timeout = 999
+      end
+      expect(JulesRuby.configuration.timeout).to eq(999)
+    end
+  end
+
+  describe '.reset_configuration!' do
+    it 'resets configuration to defaults' do
+      JulesRuby.configure { |c| c.timeout = 999 }
+      JulesRuby.reset_configuration!
+      expect(JulesRuby.configuration.timeout).to eq(30)
     end
   end
 end
