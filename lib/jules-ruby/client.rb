@@ -105,7 +105,9 @@ module JulesRuby
 
       case status
       when 200..299
-        body.empty? ? {} : JSON.parse(body)
+        return {} if body.nil? || body.empty?
+
+        JSON.parse(body)
       when 400
         raise BadRequestError.new('Bad request', status_code: status, response: body)
       when 401
