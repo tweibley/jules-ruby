@@ -9,8 +9,6 @@ module JulesRuby
   class CLI < Thor
     package_name 'jules-ruby'
 
-    class_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
-
     def self.exit_on_failure?
       true
     end
@@ -75,8 +73,6 @@ module JulesRuby
         $ jules-ruby sources list --format=json
     LONGDESC
     subcommand 'sources', Class.new(Thor) {
-      class_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
-
       desc 'list', 'List all connected repositories'
       long_desc <<~LONGDESC
         List all GitHub repositories connected to your Jules account.
@@ -85,6 +81,7 @@ module JulesRuby
           $ jules-ruby sources list
           $ jules-ruby sources list --format=json
       LONGDESC
+      method_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
       def list
         sources = client.sources.all
         if options[:format] == 'json'
@@ -103,6 +100,7 @@ module JulesRuby
         Example:
           $ jules-ruby sources show sources/github/owner/repo
       LONGDESC
+      method_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
       def show(name)
         source = client.sources.find(name)
         if options[:format] == 'json'
@@ -142,7 +140,11 @@ module JulesRuby
       end
 
       def error_exit(error)
-        warn "Error: #{error.message}"
+        if options[:format] == 'json'
+          puts JSON.generate({ error: error.message })
+        else
+          warn "Error: #{error.message}"
+        end
         exit 1
       end
     }
@@ -169,9 +171,8 @@ module JulesRuby
         $ jules-ruby sessions create --source=sources/github/owner/repo --prompt="Add tests" --auto-pr
     LONGDESC
     subcommand 'sessions', Class.new(Thor) {
-      class_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
-
       desc 'list', 'List all sessions'
+      method_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
       def list
         sessions = client.sessions.all
         if options[:format] == 'json'
@@ -184,6 +185,7 @@ module JulesRuby
       end
 
       desc 'show ID', 'Show details for a session'
+      method_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
       def show(id)
         session = client.sessions.find(id)
         if options[:format] == 'json'
@@ -341,7 +343,11 @@ module JulesRuby
       end
 
       def error_exit(error)
-        warn "Error: #{error.message}"
+        if options[:format] == 'json'
+          puts JSON.generate({ error: error.message })
+        else
+          warn "Error: #{error.message}"
+        end
         exit 1
       end
     }
@@ -362,8 +368,6 @@ module JulesRuby
         $ jules-ruby activities list SESSION_ID --format=json
     LONGDESC
     subcommand 'activities', Class.new(Thor) {
-      class_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
-
       desc 'list SESSION_ID', 'List activities for a session'
       long_desc <<~LONGDESC
         List all activities for a session (messages, plans, progress updates).
@@ -371,6 +375,7 @@ module JulesRuby
         Example:
           $ jules-ruby activities list SESSION_ID
       LONGDESC
+      method_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
       def list(session_id)
         activities = client.activities.all(session_id)
         if options[:format] == 'json'
@@ -389,6 +394,7 @@ module JulesRuby
         Example:
           $ jules-ruby activities show sessions/SESSION_ID/activities/ACTIVITY_ID
       LONGDESC
+      method_option :format, type: :string, default: 'table', enum: %w[table json], desc: 'Output format'
       def show(name)
         activity = client.activities.find(name)
         if options[:format] == 'json'
@@ -477,7 +483,11 @@ module JulesRuby
       end
 
       def error_exit(error)
-        warn "Error: #{error.message}"
+        if options[:format] == 'json'
+          puts JSON.generate({ error: error.message })
+        else
+          warn "Error: #{error.message}"
+        end
         exit 1
       end
     }
