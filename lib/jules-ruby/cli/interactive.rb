@@ -436,7 +436,8 @@ module JulesRuby
         'Select a source to view:',
         choices,
         filter: true,
-        per_page: 15
+        per_page: 15,
+        cycle: true
       )
 
       return if source == :back
