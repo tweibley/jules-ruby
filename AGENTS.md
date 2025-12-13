@@ -71,20 +71,67 @@ gem install ./jules-ruby-*.gem
 These commands were already run on Jules to prepare the environment:
 
 ```bash
-# Install system dependencies and mise
-sudo apt update -y && sudo apt install -y curl
-sudo apt-get install -y libssl-dev libyaml-dev zlib1g-dev libreadline-dev libgdbm-dev
-curl https://mise.run | sh
+#!/bin/bash
+set -e  # Exit immediately if a command exits with a non-zero status
+
+# 1. System Packages: Check individually before apt update/install
+# We gather missing packages first to avoid running apt update unnecessarily
+REQUIRED_PKGS="curl libssl-dev libyaml-dev zlib1g-dev libreadline-dev libgdbm-dev"
+MISSING_PKGS=""
+
+for pkg in $REQUIRED_PKGS; do
+    if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+        MISSING_PKGS="$MISSING_PKGS $pkg"
+    fi
+done
+if [ -n "$MISSING_PKGS" ]; then
+    echo "Installing missing packages: $MISSING_PKGS"
+    sudo apt-get update -y
+    sudo apt-get install -y $MISSING_PKGS
+else
+    echo "System packages already installed."
+fi
+
+# 2. Install Mise: Check for the binary
+if [ ! -f "$HOME/.local/bin/mise" ]; then
+    echo "Installing mise..."
+    curl https://mise.run | sh
+else
+    echo "mise already installed."
+fi
+
+# Set path for the duration of this script
 export PATH="$HOME/.local/bin:$PATH"
 
-# Activate mise and install Ruby (from mise.toml)
+# 3. Activate Mise: Always run this to ensure the current shell has access to tools
 eval "$(mise activate bash --shims)"
+
+# 4. Mise Tools: 'mise install' is generally smart, but we can skip if you want pure speed.
+# However, keep it to ensure version compliance.
 mise trust -a
 mise install
 
-# Install gem dependencies
-gem install --quiet bundler rake
-bundle install
+# 5. Global Gems: Check if they exist
+if ! gem list -i bundler >/dev/null 2>&1; then
+    gem install --quiet bundler
+fi
+
+if ! gem list -i rake >/dev/null 2>&1; then
+    gem install --quiet rake
+fi
+
+echo "Done with Ruby install!"
+
+# 6. Bundle Install: Use 'bundle check' to skip 'bundle install'
+if ! bundle check >/dev/null 2>&1; then
+    echo "Installing project dependencies..."
+    bundle install
+else
+    echo "Bundle dependencies satisfied."
+fi
+
+echo
+echo "Environment prepared!"
 ```
 
 ## Code Style Guidelines
@@ -128,6 +175,27 @@ Key settings from `.rubocop.yml`:
 4. **CLI** (`lib/jules-ruby/cli.rb`): Thor-based commands:
    - Subcommands: `sources`, `sessions`, `activities`, `interactive`
    - Output formats: `--format=table` (default) or `--format=json`
+
+### CLI Color Theme
+
+The interactive CLI uses a custom purple color theme defined in `lib/jules-ruby/cli/prompts.rb`:
+
+```ruby
+COLORS = {
+  purple: [147, 112, 219],   # #9370DB - menu items, values, content
+  lavender: [196, 181, 253], # #C4B5FD - labels, prompts  
+  muted: [139, 92, 246],     # #8B5CF6 - dividers, decorations
+  dim: [107, 114, 128]       # #6B7280 - hints like "Press any key..."
+}.freeze
+```
+
+**Color helpers** (in `Prompts` module):
+- `rgb_color(text, :color_name)` - Apply true-color ANSI escape sequences
+- `highlight(text)` - Apply lavender color
+- `muted(text)` - Apply dim color
+- `divider` - Return a colored divider line
+
+**When modifying CLI output**, use these helpers instead of raw strings to maintain the theme. The banner uses a separate HSL-based gradient in `banner.rb`.
 
 ## Dependencies
 
