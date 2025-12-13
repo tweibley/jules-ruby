@@ -4,9 +4,9 @@ require 'simplecov'
 SimpleCov.start do
   add_filter '/spec/'
   add_filter '/lib/jules-ruby/cli.rb'
+  add_filter '/lib/jules-ruby/cli/interactive.rb'
   enable_coverage :branch
-  # 99% threshold accounts for 3 unreachable defensive code lines
-  minimum_coverage line: 99
+  minimum_coverage line: 100
 end
 
 require 'jules-ruby'

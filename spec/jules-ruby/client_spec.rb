@@ -63,6 +63,27 @@ RSpec.describe JulesRuby::Client do
     end
   end
 
+  describe '#initialize' do
+    it 'raises ConfigurationError if api_key is missing' do
+      # Mock ENV.fetch to ensure no default is loaded
+      allow(ENV).to receive(:fetch).with('JULES_API_KEY', nil).and_return(nil)
+      # And ensure global config doesn't interfere
+      allow(JulesRuby).to receive(:configuration).and_return(nil)
+
+      expect { described_class.new(api_key: nil) }.to raise_error(JulesRuby::ConfigurationError)
+    end
+  end
+
+  describe '#request' do
+    it 'raises ArgumentError for unsupported methods' do
+      # Stub build_headers to avoid other errors
+      allow_any_instance_of(described_class).to receive(:build_headers).and_return({})
+      # Force call request with unsupported method
+      expect { client.send(:request, :patch, '/') }.to raise_error(ArgumentError, /Unsupported HTTP method/)
+    end
+  end
+
+  # Resource accessors
   describe '#post' do
     before do
       stub_request(:post, 'https://jules.googleapis.com/v1alpha/sessions')
