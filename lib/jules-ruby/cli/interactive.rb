@@ -26,28 +26,37 @@ module JulesRuby
     # Returns the selected action or :refresh if timeout expires
     def select_with_auto_refresh(choices, session)
       if AUTO_REFRESH_STATES.include?(session.state)
-        puts "  ⏱️  Auto-refresh in #{AUTO_REFRESH_INTERVAL}s (press any key for menu)"
+        puts Prompts.rgb_color("  ⏱️  Auto-refresh in #{AUTO_REFRESH_INTERVAL}s (press any key for menu)", :purple)
         puts
         key = @prompt.keypress(timeout: AUTO_REFRESH_INTERVAL)
         return :refresh unless key
 
         # User pressed a key, show normal menu
-        @prompt.select('Action:', choices, cycle: true)
+        @prompt.select(Prompts.rgb_color('Action:', :lavender), choices, cycle: true)
       else
-        @prompt.select('Action:', choices, cycle: true)
+        @prompt.select(Prompts.rgb_color('Action:', :lavender), choices, cycle: true)
       end
     end
 
     def display_session_header(session)
-      puts "  📋 #{session.title || 'Session Details'} #{Prompts.state_emoji(session.state)}"
-      puts "  #{'─' * 50}"
+      puts "  📋 #{Prompts.highlight(session.title || 'Session Details')} #{Prompts.state_emoji(session.state)}"
+      puts "  #{Prompts.divider}"
       puts
-      puts "  ID:      #{session.id}"
-      puts "  State:   #{Prompts.state_label(session.state)}"
-      puts "  Prompt:  #{session.prompt&.slice(0, 60)}#{'...' if session.prompt && session.prompt.length > 60}"
-      puts "  URL:     #{session.url}" if session.url
-      puts "  Created: #{Prompts.format_datetime(session.create_time)}"
-      puts "  Updated: #{Prompts.format_datetime(session.update_time)}"
+      puts "  #{Prompts.rgb_color('ID:', :lavender)}      #{Prompts.rgb_color(session.id, :purple)}"
+      puts "  #{Prompts.rgb_color('State:',
+                                  :lavender)}   #{Prompts.rgb_color(Prompts.state_label(session.state), :purple)}"
+      puts "  #{Prompts.rgb_color('Prompt:',
+                                  :lavender)}  #{Prompts.rgb_color(session.prompt&.slice(0, 60),
+                                                                   :purple)}#{if session.prompt && session.prompt.length > 60
+                                                                                '...'
+                                                                              end}"
+      puts "  #{Prompts.rgb_color('URL:', :lavender)}     #{Prompts.rgb_color(session.url, :purple)}" if session.url
+      puts "  #{Prompts.rgb_color('Created:',
+                                  :lavender)} #{Prompts.rgb_color(Prompts.format_datetime(session.create_time),
+                                                                  :purple)}"
+      puts "  #{Prompts.rgb_color('Updated:',
+                                  :lavender)} #{Prompts.rgb_color(Prompts.format_datetime(session.update_time),
+                                                                  :purple)}"
     end
 
     def fetch_latest_activity(session)
@@ -66,11 +75,11 @@ module JulesRuby
       return unless latest_activity
 
       puts
-      puts '  📍 Latest Activity'
-      puts '  ─────────────────────────────────────'
+      puts "  📍 #{Prompts.highlight('Latest Activity')}"
+      puts "  #{Prompts.divider}"
       time = Prompts.time_ago_in_words(latest_activity.create_time)
       type_str = latest_activity.type.to_s.gsub('_', ' ').capitalize
-      puts "  #{type_str} (#{time})"
+      puts Prompts.rgb_color("  #{type_str} (#{time})", :purple)
       puts
       display_activity_content(latest_activity)
     end
@@ -78,32 +87,35 @@ module JulesRuby
     def display_activity_content(activity)
       case activity.type
       when :agent_messaged, :user_messaged
-        wrap_text(activity.message, 76).each_line { |line| puts "  #{line}" }
+        wrap_text(activity.message, 76).each_line { |line| puts Prompts.rgb_color("  #{line}", :purple) }
       when :plan_generated
         if activity.plan&.steps
           activity.plan.steps.each_with_index do |step, i|
-            puts "  #{i + 1}. #{step.title}"
+            puts Prompts.rgb_color("  #{i + 1}. #{step.title}", :purple)
           end
         end
       when :progress_updated
-        puts "  #{activity.progress_title}"
-        puts "  #{activity.progress_description}" if activity.progress_description
+        puts Prompts.rgb_color("  #{activity.progress_title}", :purple)
+        puts Prompts.rgb_color("  #{activity.progress_description}", :purple) if activity.progress_description
       when :session_failed
-        wrap_text(activity.failure_reason, 76).each_line { |line| puts "  #{line}" }
+        wrap_text(activity.failure_reason, 76).each_line { |line| puts Prompts.rgb_color("  #{line}", :purple) }
       when :session_completed
-        puts '  Session completed successfully'
+        puts Prompts.rgb_color('  Session completed successfully', :purple)
       end
     end
 
     def get_session_choices(session)
       choices = []
-      choices << { name: '✅ Approve Plan', value: :approve } if session.awaiting_plan_approval?
-      choices << { name: '💬 Send Message', value: :message }
-      choices << { name: '📜 View Activities', value: :activities }
-      choices << { name: '🌐 Open in Browser', value: :open_url } if session.url
-      choices << { name: '🗑️  Delete Session', value: :delete }
-      choices << { name: '🔄 Refresh', value: :refresh }
-      choices << { name: '← Back', value: :back }
+      if session.awaiting_plan_approval?
+        choices << { name: "✅ #{Prompts.rgb_color('Approve Plan', :purple)}",
+                     value: :approve }
+      end
+      choices << { name: "💬 #{Prompts.rgb_color('Send Message', :purple)}", value: :message }
+      choices << { name: "📜 #{Prompts.rgb_color('View Activities', :purple)}", value: :activities }
+      choices << { name: "🌐 #{Prompts.rgb_color('Open in Browser', :purple)}", value: :open_url } if session.url
+      choices << { name: "🗑️  #{Prompts.rgb_color('Delete Session', :purple)}", value: :delete }
+      choices << { name: "🔄 #{Prompts.rgb_color('Refresh', :purple)}", value: :refresh }
+      choices << { name: "← #{Prompts.rgb_color('Back', :purple)}", value: :back }
       choices
     end
 
@@ -132,31 +144,33 @@ module JulesRuby
       Prompts.with_spinner('Approving plan...') do
         @client.sessions.approve_plan(session.name)
       end
-      puts "\n  ✅ Plan approved!"
-      @prompt.keypress('Press any key to continue...')
+      puts Prompts.rgb_color("\n  ✅ Plan approved!", :purple)
+      @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
       @client.sessions.find(session.name)
     end
 
     def send_message(session)
-      msg = @prompt.ask('Message to send:')
+      msg = @prompt.ask(Prompts.rgb_color('Message to send:', :lavender))
       return unless msg && !msg.empty?
 
       Prompts.with_spinner('Sending message...') do
         @client.sessions.send_message(session.name, prompt: msg)
       end
-      puts "\n  ✅ Message sent!"
-      @prompt.keypress('Press any key to continue...')
+      puts Prompts.rgb_color("\n  ✅ Message sent!", :purple)
+      @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
       @client.sessions.find(session.name)
     end
 
     def delete_session(session)
-      return false unless @prompt.yes?("Are you sure you want to delete session #{session.id}?", default: false)
+      return false unless @prompt.yes?(
+        Prompts.rgb_color("Are you sure you want to delete session #{session.id}?", :lavender), default: false
+      )
 
       Prompts.with_spinner('Deleting session...') do
         @client.sessions.destroy(session.name)
       end
-      puts "\n  ✅ Session deleted!"
-      @prompt.keypress('Press any key to continue...')
+      puts Prompts.rgb_color("\n  ✅ Session deleted!", :purple)
+      @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
       true
     end
 
@@ -171,35 +185,43 @@ module JulesRuby
       type_str = activity.type.to_s.gsub('_', ' ').capitalize
 
       puts
-      puts "  ┌─ #{type_str} (#{time})"
+      puts Prompts.rgb_color("  ┌─ #{type_str} (#{time})", :muted)
 
       display_activity_box_content(activity)
 
-      puts '  └─'
+      puts Prompts.rgb_color('  └─', :muted)
     end
 
     def display_activity_box_content(activity)
       case activity.type
       when :agent_messaged, :user_messaged
         if activity.message
-          puts '  │'
-          wrap_text(activity.message, 72).each_line { |line| puts "  │  #{line}" }
+          puts Prompts.rgb_color('  │', :muted)
+          wrap_text(activity.message, 72).each_line do |line|
+            puts "#{Prompts.rgb_color('  │', :muted)}  #{Prompts.rgb_color(line.chomp, :purple)}"
+          end
         end
       when :plan_generated
         if activity.plan&.steps
-          puts '  │'
+          puts Prompts.rgb_color('  │', :muted)
           activity.plan.steps.each_with_index do |step, i|
-            puts "  │  #{i + 1}. #{step.title}"
+            puts "#{Prompts.rgb_color('  │', :muted)}  #{Prompts.rgb_color("#{i + 1}. #{step.title}", :purple)}"
           end
         end
       when :progress_updated
-        puts "  │  #{activity.progress_title}"
-        puts "  │  #{activity.progress_description}" if activity.progress_description
+        puts "#{Prompts.rgb_color('  │', :muted)}  #{Prompts.rgb_color(activity.progress_title, :purple)}"
+        if activity.progress_description
+          puts "#{Prompts.rgb_color('  │',
+                                    :muted)}  #{Prompts.rgb_color(activity.progress_description,
+                                                                  :purple)}"
+        end
       when :session_failed
-        puts '  │'
-        wrap_text(activity.failure_reason, 72).each_line { |line| puts "  │  #{line}" }
+        puts Prompts.rgb_color('  │', :muted)
+        wrap_text(activity.failure_reason, 72).each_line do |line|
+          puts "#{Prompts.rgb_color('  │', :muted)}  #{Prompts.rgb_color(line.chomp, :purple)}"
+        end
       when :session_completed
-        puts '  │  Session completed successfully'
+        puts "#{Prompts.rgb_color('  │', :muted)}  #{Prompts.rgb_color('Session completed successfully', :purple)}"
       end
     end
 
@@ -209,14 +231,14 @@ module JulesRuby
       end
 
       if sources.empty?
-        @prompt.error('No sources found. Please connect a repository first.')
-        @prompt.keypress('Press any key to continue...')
+        @prompt.error(Prompts.rgb_color('No sources found. Please connect a repository first.', :purple))
+        @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
         return nil
       end
 
       source_choices = sources.map { |s| Prompts.format_source_choice(s) }
       @prompt.select(
-        'Select a repository:',
+        Prompts.rgb_color('Select a repository:', :lavender),
         source_choices,
         filter: true,
         per_page: 15
@@ -225,7 +247,7 @@ module JulesRuby
 
     def ask_for_prompt
       puts
-      @prompt.ask('What would you like Jules to do?') do |q|
+      @prompt.ask(Prompts.rgb_color('What would you like Jules to do?', :lavender)) do |q|
         q.required true
         q.validate(/\S/, 'Prompt cannot be empty')
       end
@@ -233,13 +255,17 @@ module JulesRuby
 
     def display_session_summary(source, branch, task_prompt, title, auto_pr)
       puts
-      puts '  📋 Session Summary'
-      puts '  ─────────────────────────────────────'
-      puts "  📦 Repository: #{source.github_repo&.full_name}"
-      puts "  🌿 Branch:     #{branch}"
-      puts "  📝 Prompt:     #{task_prompt.slice(0, 50)}#{'...' if task_prompt.length > 50}"
-      puts "  🏷️  Title:      #{title || '(auto-generated)'}"
-      puts "  🔄 Auto PR:    #{auto_pr ? 'Yes' : 'No'}"
+      puts "  📋 #{Prompts.highlight('Session Summary')}"
+      puts "  #{Prompts.divider}"
+      puts "  #{Prompts.rgb_color('📦 Repository:',
+                                  :lavender)} #{Prompts.rgb_color(source.github_repo&.full_name, :purple)}"
+      puts "  #{Prompts.rgb_color('🌿 Branch:', :lavender)}     #{Prompts.rgb_color(branch, :purple)}"
+      puts "  #{Prompts.rgb_color('📝 Prompt:',
+                                  :lavender)}     #{Prompts.rgb_color(task_prompt.slice(0, 50),
+                                                                      :purple)}#{'...' if task_prompt.length > 50}"
+      puts "  #{Prompts.rgb_color('🏷️  Title:',
+                                  :lavender)}      #{Prompts.rgb_color(title || '(auto-generated)', :purple)}"
+      puts "  #{Prompts.rgb_color('🔄 Auto PR:', :lavender)}    #{Prompts.rgb_color(auto_pr ? 'Yes' : 'No', :purple)}"
       puts
     end
 
@@ -261,12 +287,12 @@ module JulesRuby
       end
 
       puts
-      puts "  ✅ Session created: #{session.name}"
-      puts "  🔗 URL: #{session.url}"
-      puts "  📊 State: #{session.state}"
+      puts Prompts.rgb_color("  ✅ Session created: #{session.name}", :purple)
+      puts Prompts.rgb_color("  🔗 URL: #{session.url}", :purple)
+      puts Prompts.rgb_color("  📊 State: #{session.state}", :purple)
       puts
 
-      @prompt.keypress('Press any key to continue...')
+      @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
     end
 
     def update_session_state(session, result, needs_activity_fetch)
@@ -286,11 +312,11 @@ module JulesRuby
         Prompts.clear_screen
         Prompts.print_banner
 
-        choice = @prompt.select('What would you like to do?', cycle: true) do |menu|
-          menu.choice 'Create new session', :create_session
-          menu.choice 'View sessions', :view_sessions
-          menu.choice 'Browse sources', :browse_sources
-          menu.choice 'Exit', :exit
+        choice = @prompt.select(Prompts.rgb_color('What would you like to do?', :lavender), cycle: true) do |menu|
+          menu.choice Prompts.rgb_color('Create new session', :purple), :create_session
+          menu.choice Prompts.rgb_color('View sessions', :purple), :view_sessions
+          menu.choice Prompts.rgb_color('Browse sources', :purple), :browse_sources
+          menu.choice Prompts.rgb_color('Exit', :purple), :exit
         end
 
         case choice
@@ -301,7 +327,7 @@ module JulesRuby
         when :browse_sources
           browse_sources
         when :exit
-          puts "\nGoodbye! 👋"
+          puts Prompts.rgb_color("\nGoodbye! 👋", :purple)
           break
         end
       end
@@ -314,16 +340,16 @@ module JulesRuby
       source = select_source
       return unless source
 
-      branch = @prompt.ask('Starting branch:', default: 'main')
+      branch = @prompt.ask(Prompts.rgb_color('Starting branch:', :lavender), default: 'main')
 
       task_prompt = ask_for_prompt
 
-      title = @prompt.ask('Session title (optional):')
-      auto_pr = @prompt.yes?('Auto-create PR when done?', default: true)
+      title = @prompt.ask(Prompts.rgb_color('Session title (optional):', :lavender))
+      auto_pr = @prompt.yes?(Prompts.rgb_color('Auto-create PR when done?', :lavender), default: true)
 
       display_session_summary(source, branch, task_prompt, title, auto_pr)
 
-      return unless @prompt.yes?('Create this session?', default: true)
+      return unless @prompt.yes?(Prompts.rgb_color('Create this session?', :lavender), default: true)
 
       create_and_display_session(source, branch, task_prompt, title, auto_pr)
     end
@@ -338,17 +364,17 @@ module JulesRuby
         end
 
         if sessions.empty?
-          @prompt.warn('No sessions found.')
-          @prompt.keypress('Press any key to continue...')
+          @prompt.warn(Prompts.rgb_color('No sessions found.', :purple))
+          @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
           return
         end
 
         choices = sessions.map { |s| Prompts.format_session_choice(s) }
-        choices.unshift({ name: '➕ Create new session', value: :create })
-        choices << { name: '← Back to main menu', value: :back }
+        choices.unshift({ name: "➕ #{Prompts.rgb_color('Create new session', :purple)}", value: :create })
+        choices << { name: "← #{Prompts.rgb_color('Back to main menu', :purple)}", value: :back }
 
         session = @prompt.select(
-          'Select a session to view:',
+          Prompts.rgb_color('Select a session to view:', :lavender),
           choices,
           per_page: 15,
           cycle: true
@@ -402,8 +428,8 @@ module JulesRuby
       end
 
       if activities.empty?
-        @prompt.warn('No activities found.')
-        @prompt.keypress('Press any key to continue...')
+        @prompt.warn(Prompts.rgb_color('No activities found.', :purple))
+        @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
         return
       end
 
@@ -412,7 +438,7 @@ module JulesRuby
       end
 
       puts
-      @prompt.keypress('Press any key to continue...')
+      @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
     end
 
     def browse_sources
@@ -424,16 +450,16 @@ module JulesRuby
       end
 
       if sources.empty?
-        @prompt.warn('No sources found.')
-        @prompt.keypress('Press any key to continue...')
+        @prompt.warn(Prompts.rgb_color('No sources found.', :purple))
+        @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
         return
       end
 
       choices = sources.map { |s| Prompts.format_source_choice(s) }
-      choices << { name: '← Back to main menu', value: :back }
+      choices << { name: "← #{Prompts.rgb_color('Back to main menu', :purple)}", value: :back }
 
       source = @prompt.select(
-        'Select a source to view:',
+        Prompts.rgb_color('Select a source to view:', :lavender),
         choices,
         filter: true,
         per_page: 15,
@@ -443,12 +469,13 @@ module JulesRuby
       return if source == :back
 
       puts
-      puts "  Name:       #{source.name}"
-      puts "  ID:         #{source.id}"
-      puts "  Repository: #{source.github_repo&.full_name}"
+      puts "  #{Prompts.rgb_color('Name:', :lavender)}       #{Prompts.rgb_color(source.name, :purple)}"
+      puts "  #{Prompts.rgb_color('ID:', :lavender)}         #{Prompts.rgb_color(source.id, :purple)}"
+      puts "  #{Prompts.rgb_color('Repository:',
+                                  :lavender)} #{Prompts.rgb_color(source.github_repo&.full_name, :purple)}"
       puts
 
-      @prompt.keypress('Press any key to continue...')
+      @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
     end
   end
 end

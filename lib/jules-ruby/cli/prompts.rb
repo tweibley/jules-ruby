@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'pastel'
 require 'tty-prompt'
 require 'tty-spinner'
 require_relative 'banner'
@@ -7,6 +8,24 @@ require_relative 'banner'
 module JulesRuby
   # Helper methods for interactive prompts
   module Prompts
+    # Custom true-color RGB theme matching Jules CLI design
+    PASTEL = Pastel.new
+
+    # RGB color values matching the reference CLI screenshot
+    COLORS = {
+      purple: [147, 112, 219],     # Selection highlight #9370DB
+      lavender: [196, 181, 253],   # Accent text #C4B5FD
+      muted: [139, 92, 246],       # Muted purple #8B5CF6
+      dim: [107, 114, 128]         # Dim gray #6B7280
+    }.freeze
+
+    # Define custom symbols for the prompt
+    PROMPT_SYMBOLS = {
+      marker: '❯',
+      radio_on: '◉',
+      radio_off: '◯'
+    }.freeze
+
     # State emoji indicators
     STATE_EMOJI = {
       'QUEUED' => '⏳',
@@ -31,22 +50,38 @@ module JulesRuby
     }.freeze
 
     class << self
+      # Apply true-color RGB to text using ANSI escape sequences
+      def rgb_color(text, color_name)
+        r, g, b = COLORS[color_name]
+        "\e[38;2;#{r};#{g};#{b}m#{text}\e[0m"
+      end
+
       def prompt
-        @prompt ||= TTY::Prompt.new(interrupt: :exit)
+        @prompt ||= TTY::Prompt.new(
+          interrupt: :exit,
+          symbols: PROMPT_SYMBOLS,
+          active_color: :magenta,
+          help_color: :cyan
+        )
       end
 
       def spinner(message)
-        TTY::Spinner.new("[:spinner] #{message}", format: :dots)
+        TTY::Spinner.new(
+          "[:spinner] #{rgb_color(message, :purple)}",
+          format: :dots,
+          success_mark: PASTEL.green('✓'),
+          error_mark: PASTEL.red('✗')
+        )
       end
 
       def with_spinner(message)
         spin = spinner(message)
         spin.auto_spin
         result = yield
-        spin.success('done')
+        spin.success(PASTEL.green('done'))
         result
       rescue StandardError => e
-        spin.error('failed')
+        spin.error(PASTEL.red('failed'))
         raise e
       end
 
@@ -71,7 +106,8 @@ module JulesRuby
         title = "#{title[0..22]}..." if title.length > 25
         time_ago = time_ago_in_words(session.update_time)
         {
-          name: "#{emoji} #{title.ljust(27)} #{label.ljust(15)} #{time_ago}",
+          name: "#{emoji} #{rgb_color(title.ljust(27),
+                                      :purple)} #{rgb_color(label.ljust(15), :lavender)} #{rgb_color(time_ago, :dim)}",
           value: session
         }
       end
@@ -79,7 +115,7 @@ module JulesRuby
       def format_source_choice(source)
         repo_name = source.github_repo&.full_name || source.name
         {
-          name: repo_name,
+          name: rgb_color(repo_name, :purple),
           value: source
         }
       end
@@ -123,9 +159,21 @@ module JulesRuby
 
       def header(title)
         puts
-        puts "  🚀 #{title}"
-        puts "  #{'─' * 50}"
+        puts "  🚀 #{rgb_color(title, :lavender)}"
+        puts "  #{rgb_color('─' * 50, :muted)}"
         puts
+      end
+
+      def divider
+        rgb_color('─' * 50, :muted)
+      end
+
+      def highlight(text)
+        rgb_color(text, :lavender)
+      end
+
+      def muted(text)
+        rgb_color(text, :dim)
       end
 
       def print_banner

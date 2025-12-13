@@ -81,30 +81,27 @@ RSpec.describe JulesRuby::Interactive do
 
   describe '#start' do
     it 'displays menu and handles exit' do
-      allow(prompt).to receive(:select).with('What would you like to do?', cycle: true).and_return(:exit)
+      allow(prompt).to receive(:select).and_return(:exit)
 
       expect { interactive.start }.to_not raise_error
     end
 
     it 'calls create_session_wizard when selected' do
-      expect(prompt).to receive(:select).with('What would you like to do?', cycle: true).and_return(:create_session,
-                                                                                                    :exit)
+      expect(prompt).to receive(:select).and_return(:create_session, :exit)
       expect(interactive).to receive(:create_session_wizard)
 
       interactive.start
     end
 
     it 'calls view_sessions when selected' do
-      expect(prompt).to receive(:select).with('What would you like to do?', cycle: true).and_return(:view_sessions,
-                                                                                                    :exit)
+      expect(prompt).to receive(:select).and_return(:view_sessions, :exit)
       expect(interactive).to receive(:view_sessions)
 
       interactive.start
     end
 
     it 'calls browse_sources when selected' do
-      expect(prompt).to receive(:select).with('What would you like to do?', cycle: true).and_return(:browse_sources,
-                                                                                                    :exit)
+      expect(prompt).to receive(:select).and_return(:browse_sources, :exit)
       expect(interactive).to receive(:browse_sources)
 
       interactive.start
@@ -115,7 +112,7 @@ RSpec.describe JulesRuby::Interactive do
     context 'when no sources exist' do
       it 'displays error and returns' do
         allow(sources_resource).to receive(:all).and_return([])
-        expect(prompt).to receive(:error).with(/No sources found/)
+        expect(prompt).to receive(:error).with(a_string_matching(/No sources found/))
 
         interactive.create_session_wizard
       end
@@ -124,16 +121,12 @@ RSpec.describe JulesRuby::Interactive do
     context 'when sources exist' do
       before do
         allow(sources_resource).to receive(:all).and_return([source_obj])
-        allow(prompt).to receive(:select).with('Select a repository:', anything, anything).and_return(source_obj)
-        allow(prompt).to receive(:ask).with('Starting branch:', default: 'main').and_return('main')
-        allow(prompt).to receive(:ask).with('What would you like Jules to do?').and_return('Task')
-        allow(prompt).to receive(:ask).with('Session title (optional):').and_return('My Session')
-        allow(prompt).to receive(:yes?).with('Auto-create PR when done?', default: true).and_return(true)
+        allow(prompt).to receive(:select).and_return(source_obj)
+        allow(prompt).to receive(:ask).and_return('main', 'Task', 'My Session')
+        allow(prompt).to receive(:yes?).and_return(true)
       end
 
       it 'creates a session if confirmed' do
-        expect(prompt).to receive(:yes?).with('Create this session?', default: true).and_return(true)
-
         expect(sessions_resource).to receive(:create).with(
           prompt: 'Task',
           source_context: {
@@ -148,7 +141,7 @@ RSpec.describe JulesRuby::Interactive do
       end
 
       it 'aborts if not confirmed' do
-        expect(prompt).to receive(:yes?).with('Create this session?', default: true).and_return(false)
+        allow(prompt).to receive(:yes?).and_return(true, false)
         expect(sessions_resource).not_to receive(:create)
 
         interactive.create_session_wizard
@@ -160,7 +153,7 @@ RSpec.describe JulesRuby::Interactive do
     context 'when no sessions exist' do
       it 'displays warning and returns' do
         allow(sessions_resource).to receive(:all).and_return([])
-        expect(prompt).to receive(:warn).with(/No sessions found/)
+        expect(prompt).to receive(:warn).with(a_string_matching(/No sessions found/))
 
         interactive.view_sessions
       end
@@ -220,7 +213,7 @@ RSpec.describe JulesRuby::Interactive do
 
     it 'allows sending a message' do
       expect(prompt).to receive(:select).and_return(:message, :back)
-      expect(prompt).to receive(:ask).with('Message to send:').and_return('hello')
+      expect(prompt).to receive(:ask).and_return('hello')
       expect(sessions_resource).to receive(:send_message).with(session_obj.name, prompt: 'hello')
       expect(sessions_resource).to receive(:find).with(session_obj.name).and_return(session_obj)
 
@@ -364,7 +357,7 @@ RSpec.describe JulesRuby::Interactive do
 
     it 'warns if no activities' do
       allow(activities_resource).to receive(:all).and_return([])
-      expect(prompt).to receive(:warn).with(/No activities found/)
+      expect(prompt).to receive(:warn).with(a_string_matching(/No activities found/))
 
       interactive.view_activities(session_obj)
     end

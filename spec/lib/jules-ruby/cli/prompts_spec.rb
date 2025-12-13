@@ -22,7 +22,7 @@ RSpec.describe JulesRuby::Prompts do
 
     it 'spins and returns result on success' do
       expect(spinner_double).to receive(:auto_spin)
-      expect(spinner_double).to receive(:success).with('done')
+      expect(spinner_double).to receive(:success).with(a_string_matching(/done/))
 
       result = described_class.with_spinner('checking') { 'success' }
       expect(result).to eq('success')
@@ -30,7 +30,7 @@ RSpec.describe JulesRuby::Prompts do
 
     it 'spins and stops on error' do
       expect(spinner_double).to receive(:auto_spin)
-      expect(spinner_double).to receive(:error).with('failed')
+      expect(spinner_double).to receive(:error).with(a_string_matching(/failed/))
 
       expect do
         described_class.with_spinner('checking') { raise StandardError, 'fail' }
@@ -148,13 +148,13 @@ RSpec.describe JulesRuby::Prompts do
 
       it 'uses github repo full name' do
         result = described_class.format_source_choice(source)
-        expect(result[:name]).to eq('owner/repo')
+        expect(result[:name]).to include('owner/repo')
       end
 
       it 'falls back to source name' do
         allow(source).to receive(:github_repo).and_return(nil)
         result = described_class.format_source_choice(source)
-        expect(result[:name]).to eq('foo')
+        expect(result[:name]).to include('foo')
       end
     end
   end
@@ -165,9 +165,26 @@ RSpec.describe JulesRuby::Prompts do
     end
   end
 
+  describe '.highlight' do
+    it 'returns text with lavender color codes' do
+      result = described_class.highlight('test')
+      expect(result).to include('test')
+      expect(result).to include("\e[38;2;")  # ANSI true color escape
+    end
+  end
+
+  describe '.muted' do
+    it 'returns text with dim color codes' do
+      result = described_class.muted('test')
+      expect(result).to include('test')
+      expect(result).to include("\e[38;2;")  # ANSI true color escape
+    end
+  end
+
   describe '.header' do
     it 'prints formatted header' do
-      expect { described_class.header('Test') }.to output(/🚀 Test/).to_stdout
+      # Header includes ANSI color codes for styling
+      expect { described_class.header('Test') }.to output(/🚀.*Test/).to_stdout
     end
   end
 
