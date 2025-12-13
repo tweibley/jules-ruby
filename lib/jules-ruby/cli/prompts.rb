@@ -55,7 +55,7 @@ module JulesRuby
       end
 
       def state_label(state)
-        STATE_LABELS[state] || state
+        STATE_LABELS[state] || state || 'Unknown'
       end
 
       def format_session_choice(session)
