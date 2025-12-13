@@ -122,6 +122,13 @@ module JulesRuby
           "Plan with #{activity.plan&.steps&.length || 0} steps"
         when :progress_updated
           activity.progress_title || ''
+        else
+          summary_for_state(activity)
+        end
+      end
+
+      def summary_for_state(activity)
+        case activity.type
         when :session_completed
           'Session completed'
         when :session_failed
