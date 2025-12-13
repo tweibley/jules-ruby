@@ -3,7 +3,6 @@
 require 'simplecov'
 SimpleCov.start do
   add_filter '/spec/'
-  add_filter '/lib/jules-ruby/cli.rb'
   add_filter '/lib/jules-ruby/cli/interactive.rb'
   enable_coverage :branch
   minimum_coverage line: 100
