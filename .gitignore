@@ -26,3 +26,6 @@ Gemfile.lock
 *.swp
 *.swo
 .vscode/
+
+# MACOS
+.DS_Store
