@@ -48,6 +48,11 @@ RSpec.describe JulesRuby::Prompts do
       expect(described_class.state_label('IN_PROGRESS')).to eq('Working')
       expect(described_class.state_label('UNKNOWN')).to eq('UNKNOWN')
     end
+
+    it 'treats nil state as completed (API returns null for completed sessions)' do
+      expect(described_class.state_emoji(nil)).to eq('🟢')
+      expect(described_class.state_label(nil)).to eq('Completed')
+    end
   end
 
   describe 'formatting helpers' do

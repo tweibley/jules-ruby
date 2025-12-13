@@ -51,11 +51,17 @@ module JulesRuby
       end
 
       def state_emoji(state)
+        # API returns nil for completed sessions
+        return '🟢' if state.nil?
+
         STATE_EMOJI[state] || '❓'
       end
 
       def state_label(state)
-        STATE_LABELS[state] || state || 'Unknown'
+        # API returns nil for completed sessions
+        return 'Completed' if state.nil?
+
+        STATE_LABELS[state] || state
       end
 
       def format_session_choice(session)
