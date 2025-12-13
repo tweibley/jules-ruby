@@ -19,7 +19,9 @@ jules-ruby/
 │       ├── version.rb             # Gem version
 │       ├── cli.rb                 # Thor-based CLI commands
 │       ├── cli/
-│       │   └── interactive.rb     # Interactive TUI mode (TTY::Prompt)
+│       │   ├── banner.rb          # CLI banner/logo display
+│       │   ├── interactive.rb     # Interactive TUI mode (TTY::Prompt)
+│       │   └── prompts.rb         # Shared prompt helpers
 │       ├── models/                # Data objects returned from API
 │       │   ├── activity.rb
 │       │   ├── artifact.rb
@@ -62,6 +64,27 @@ gem build jules-ruby.gemspec
 
 # Install locally
 gem install ./jules-ruby-*.gem
+```
+
+## Environment Setup (Already setup on Jules)
+
+These commands were already run on Jules to prepare the environment:
+
+```bash
+# Install system dependencies and mise
+sudo apt update -y && sudo apt install -y curl
+sudo apt-get install -y libssl-dev libyaml-dev zlib1g-dev libreadline-dev libgdbm-dev
+curl https://mise.run | sh
+export PATH="$HOME/.local/bin:$PATH"
+
+# Activate mise and install Ruby (from mise.toml)
+eval "$(mise activate bash --shims)"
+mise trust -a
+mise install
+
+# Install gem dependencies
+gem install --quiet bundler rake
+bundle install
 ```
 
 ## Code Style Guidelines
@@ -114,11 +137,13 @@ Key settings from `.rubocop.yml`:
 - `thor ~> 1.3` - CLI framework
 - `tty-prompt ~> 0.23` - Interactive prompts
 - `tty-spinner ~> 0.9` - Loading spinners
+- `pastel ~> 0.8` - Terminal output styling
 
 ### Development
 - `rspec ~> 3.0` - Testing
 - `webmock ~> 3.0` - HTTP request stubbing
 - `rubocop ~> 1.0` - Linting
+- `simplecov ~> 0.22` - Code coverage
 
 ## Configuration
 
