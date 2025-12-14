@@ -84,7 +84,9 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
       end
 
       it 'displays completion message' do
-        expect { subject.send(:display_activity_content, activity) }.to output(/Session completed successfully/).to_stdout
+        expect do
+          subject.send(:display_activity_content, activity)
+        end.to output(/Session completed successfully/).to_stdout
       end
     end
 
@@ -96,7 +98,9 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
       end
 
       it 'displays progress' do
-        expect { subject.send(:display_activity_content, activity) }.to output(/Progress Title.*Progress Description/m).to_stdout
+        expect do
+          subject.send(:display_activity_content, activity)
+        end.to output(/Progress Title.*Progress Description/m).to_stdout
       end
     end
   end
@@ -128,25 +132,25 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
   end
 
   describe '#view_activities' do
-     let(:session) { instance_double(JulesRuby::Models::Session, name: 'sessions/123') }
+    let(:session) { instance_double(JulesRuby::Models::Session, name: 'sessions/123') }
 
-     context 'when no activities found' do
-       before do
-         allow(activities_resource).to receive(:all).and_return([])
-         allow(prompt).to receive(:warn)
-         allow(prompt).to receive(:keypress)
-       end
+    context 'when no activities found' do
+      before do
+        allow(activities_resource).to receive(:all).and_return([])
+        allow(prompt).to receive(:warn)
+        allow(prompt).to receive(:keypress)
+      end
 
-       it 'warns and returns' do
-         expect(prompt).to receive(:warn).with(/No activities found/)
-         subject.send(:view_activities, session)
-       end
-     end
+      it 'warns and returns' do
+        expect(prompt).to receive(:warn).with(/No activities found/)
+        subject.send(:view_activities, session)
+      end
+    end
   end
 
   describe '#wrap_text' do
     it 'wraps text correctly' do
-      text = "a" * 50 + " " + "b" * 50
+      text = "#{'a' * 50} #{'b' * 50}"
       wrapped = subject.send(:wrap_text, text, 76)
       expect(wrapped).to include("\n")
     end
@@ -171,16 +175,16 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
 
   describe '#truncate' do
     it 'truncates text' do
-      text = "a" * 20
-      expect(subject.send(:truncate, text, 10)).to eq("aaaaaaaaaa...")
+      text = 'a' * 20
+      expect(subject.send(:truncate, text, 10)).to eq('aaaaaaaaaa...')
     end
 
     it 'returns empty string if text is nil' do
-       expect(subject.send(:truncate, nil, 10)).to eq('')
+      expect(subject.send(:truncate, nil, 10)).to eq('')
     end
 
     it 'returns text if shorter than length' do
-       expect(subject.send(:truncate, "abc", 10)).to eq('abc')
+      expect(subject.send(:truncate, 'abc', 10)).to eq('abc')
     end
   end
 end
