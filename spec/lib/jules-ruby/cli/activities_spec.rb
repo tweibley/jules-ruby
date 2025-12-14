@@ -12,6 +12,7 @@ RSpec.describe JulesRuby::Commands::Activities do
     allow(JulesRuby::Client).to receive(:new).and_return(client)
     allow(client).to receive(:activities).and_return(activities_resource)
     allow(commands).to receive(:options).and_return({})
+    allow(commands).to receive(:warn)
   end
 
   describe '#list' do

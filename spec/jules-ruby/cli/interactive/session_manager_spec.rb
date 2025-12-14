@@ -19,6 +19,7 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
     allow(JulesRuby::Interactive::ActivityRenderer).to receive(:new).and_return(renderer)
     allow(client).to receive(:sessions).and_return(sessions_resource)
     allow(client).to receive(:activities).and_return(activities_resource)
+    allow($stdout).to receive(:puts)
   end
 
   describe '#run' do

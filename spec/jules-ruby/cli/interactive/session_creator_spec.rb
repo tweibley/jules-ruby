@@ -14,6 +14,7 @@ RSpec.describe JulesRuby::Interactive::SessionCreator do
     allow(JulesRuby::Prompts).to receive(:clear_screen)
     allow(JulesRuby::Prompts).to receive(:print_banner)
     allow(client).to receive(:sources).and_return(sources_resource)
+    allow($stdout).to receive(:puts)
   end
 
   describe '#run' do
