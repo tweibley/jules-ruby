@@ -193,7 +193,7 @@ module JulesRuby
           view_activities(session)
           :refresh
         when :open_url
-          system('open', session.url) if session.url
+          open_browser(session.url)
           nil
         when :delete then delete_session?(session) ? :deleted : nil
         when :refresh then refresh_session(session)
@@ -266,6 +266,18 @@ module JulesRuby
         else
           [session, needs_activity_fetch]
         end
+      end
+
+      def open_browser(url)
+        return unless url
+
+        unless url.match?(%r{\Ahttps?://})
+          @prompt.error(Prompts.rgb_color("Invalid URL scheme: #{url}. Only http/https supported.", :purple))
+          @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
+          return
+        end
+
+        system('open', url)
       end
 
       def wrap_text(text, width = 76)

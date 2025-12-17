@@ -110,9 +110,36 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
     let(:session) { instance_double(JulesRuby::Models::Session, name: 'sessions/123', url: 'http://example.com', id: '123') }
 
     context 'when action is :open_url' do
-      it 'opens the url' do
-        expect(subject).to receive(:system).with('open', 'http://example.com')
-        subject.send(:handle_session_action, :open_url, session)
+      context 'with valid http url' do
+        it 'opens the url' do
+          expect(subject).to receive(:system).with('open', 'http://example.com')
+          subject.send(:handle_session_action, :open_url, session)
+        end
+      end
+
+      context 'with valid https url' do
+        let(:session) { instance_double(JulesRuby::Models::Session, name: 'sessions/123', url: 'https://example.com', id: '123') }
+
+        it 'opens the url' do
+          expect(subject).to receive(:system).with('open', 'https://example.com')
+          subject.send(:handle_session_action, :open_url, session)
+        end
+      end
+
+      context 'with invalid url scheme' do
+        let(:session) { instance_double(JulesRuby::Models::Session, name: 'sessions/123', url: 'ftp://example.com', id: '123') }
+
+        before do
+          allow(prompt).to receive(:error)
+          allow(prompt).to receive(:keypress)
+        end
+
+        it 'displays error and does not open url' do
+          expect(subject).not_to receive(:system)
+          expect(prompt).to receive(:error).with(/Invalid URL scheme/)
+          expect(prompt).to receive(:keypress)
+          subject.send(:handle_session_action, :open_url, session)
+        end
       end
     end
 
