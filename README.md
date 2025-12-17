@@ -139,6 +139,12 @@ Interactive mode provides:
 
 All list commands support `--format=table` (default) or `--format=json`.
 
+### Gemini CLI Extension
+
+Use jules-ruby directly from [Gemini CLI](https://github.com/google-gemini/gemini-cli) with our extension:
+
+👉 [jules-ruby-gemini-cli-extension](https://github.com/tweibley/jules-ruby-gemini-cli-extension)
+
 ## Usage
 
 ### Initialize the client
