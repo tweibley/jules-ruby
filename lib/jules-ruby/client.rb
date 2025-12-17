@@ -9,6 +9,11 @@ module JulesRuby
   class Client
     attr_reader :configuration
 
+    DEFAULT_HEADERS = {
+      'Content-Type' => 'application/json',
+      'Accept' => 'application/json'
+    }.freeze
+
     def initialize(api_key: nil, base_url: nil, timeout: nil)
       @configuration = JulesRuby.configuration&.dup || Configuration.new
 
@@ -92,11 +97,10 @@ module JulesRuby
     end
 
     def build_headers
-      [
-        ['X-Goog-Api-Key', configuration.api_key],
-        ['Content-Type', 'application/json'],
-        ['Accept', 'application/json']
-      ]
+      # Optimization: Reuse DEFAULT_HEADERS hash to avoid multiple array allocations per request
+      headers = DEFAULT_HEADERS.dup
+      headers['X-Goog-Api-Key'] = configuration.api_key
+      headers
     end
 
     def handle_response(response)
