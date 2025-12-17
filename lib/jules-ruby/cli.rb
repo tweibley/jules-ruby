@@ -55,6 +55,19 @@ module JulesRuby
     desc 'interactive', 'Start interactive mode'
     def interactive
       JulesRuby::Interactive.new.start
+    rescue JulesRuby::ConfigurationError => e
+      Prompts.print_banner
+      puts
+      puts "  #{Prompts.rgb_color('⚠️  Configuration Error', :purple)}"
+      puts "  #{Prompts.divider}"
+      puts "  #{e.message}"
+      puts
+      puts "  #{Prompts.rgb_color('To fix this:', :lavender)}"
+      puts '  1. Get your API key from the Jules dashboard'
+      puts '  2. Set the environment variable:'
+      puts "     #{Prompts.rgb_color('export JULES_API_KEY=your_key_here', :muted)}"
+      puts
+      exit 1
     end
 
     map %w[-i] => :interactive

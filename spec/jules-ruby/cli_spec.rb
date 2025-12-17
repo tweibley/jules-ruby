@@ -207,6 +207,24 @@ RSpec.describe JulesRuby::CLI do
 
       expect(interactive_mock).to have_received(:start)
     end
+
+    context 'when configuration is missing' do
+      before do
+        allow(JulesRuby::Interactive).to receive(:new).and_raise(JulesRuby::ConfigurationError.new('API key missing'))
+        allow(JulesRuby::Prompts).to receive(:print_banner)
+      end
+
+      it 'displays friendly error message and exits' do
+        output = capture_stdout do
+          expect do
+            described_class.start(%w[interactive])
+          end.to raise_error(SystemExit)
+        end
+        expect(output).to include('Configuration Error')
+        expect(output).to include('API key missing')
+        expect(output).to include('export JULES_API_KEY')
+      end
+    end
   end
 
   describe 'sources' do
