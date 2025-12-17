@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |spec|
   spec.name          = "jules-ruby"
-  spec.version       = "0.1.0"
+  spec.version       = "0.0.67"
   spec.authors       = ["Taylor Weibley"]
   spec.email         = ["tweibley@gmail.com"]
 
-  spec.summary       = "Ruby client for the Jules API"
+  spec.summary       = "Ruby CLI for the Jules API"
   spec.description   = "A Ruby gem for interacting with the Jules API to programmatically create and manage asynchronous coding tasks."
   spec.homepage      = "https://github.com/tweibley/jules-ruby"
   spec.license       = "MIT"
