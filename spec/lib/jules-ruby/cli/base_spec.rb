@@ -3,20 +3,21 @@
 require 'spec_helper'
 require 'jules-ruby/cli/base'
 
-RSpec.describe JulesRuby::Commands::Base do
-  class TestCommand < JulesRuby::Commands::Base
-    no_commands do
-      def call_truncate(str, len)
-        truncate(str, len)
-      end
+# Test helper class defined outside RSpec block to avoid Lint/ConstantDefinitionInBlock
+class TestBaseCommand < JulesRuby::Commands::Base
+  no_commands do
+    def call_truncate(str, len)
+      truncate(str, len)
+    end
 
-      def call_error(err)
-        error_exit(err)
-      end
+    def call_error(err)
+      error_exit(err)
     end
   end
+end
 
-  let(:command) { TestCommand.new }
+RSpec.describe JulesRuby::Commands::Base do
+  let(:command) { TestBaseCommand.new }
 
   describe '#truncate' do
     it 'returns empty string for nil' do

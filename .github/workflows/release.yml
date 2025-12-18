@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: rubygems
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.4'
+          bundler-cache: true
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Validate version matches gemspec
+        run: |
+          GEMSPEC_VERSION=$(ruby -e "puts Gem::Specification.load('jules-ruby.gemspec').version")
+          if [ "$GEMSPEC_VERSION" != "${{ steps.version.outputs.VERSION }}" ]; then
+            echo "Error: Tag version (${{ steps.version.outputs.VERSION }}) does not match gemspec version ($GEMSPEC_VERSION)"
+            exit 1
+          fi
+
+      - name: Build gem
+        run: gem build jules-ruby.gemspec
+
+      - name: Generate SHA512 checksum
+        run: |
+          sha512sum jules-ruby-${{ steps.version.outputs.VERSION }}.gem > jules-ruby-${{ steps.version.outputs.VERSION }}.gem.sha512
+
+      - name: Configure RubyGems credentials
+        uses: rubygems/configure-rubygems-credentials@main
+
+      - name: Push to RubyGems
+        run: gem push jules-ruby-${{ steps.version.outputs.VERSION }}.gem
+
+      - name: Extract changelog for release
+        id: changelog
+        run: |
+          # Extract the section for this version from CHANGELOG.md
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          NOTES=$(awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.changelog.outputs.NOTES }}
+          files: |
+            jules-ruby-${{ steps.version.outputs.VERSION }}.gem
+            jules-ruby-${{ steps.version.outputs.VERSION }}.gem.sha512
