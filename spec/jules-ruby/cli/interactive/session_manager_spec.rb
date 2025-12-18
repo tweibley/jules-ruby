@@ -110,9 +110,42 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
     let(:session) { instance_double(JulesRuby::Models::Session, name: 'sessions/123', url: 'http://example.com', id: '123') }
 
     context 'when action is :open_url' do
-      it 'opens the url' do
-        expect(subject).to receive(:system).with('open', 'http://example.com')
-        subject.send(:handle_session_action, :open_url, session)
+      context 'with valid http url' do
+        it 'opens the url' do
+          expect(subject).to receive(:system).with('open', 'http://example.com')
+          subject.send(:handle_session_action, :open_url, session)
+        end
+      end
+
+      context 'with unsafe url scheme' do
+        let(:unsafe_session) { instance_double(JulesRuby::Models::Session, name: 'sessions/1', url: 'file:///etc/passwd') }
+
+        before do
+          allow(prompt).to receive(:warn)
+          allow(prompt).to receive(:keypress)
+        end
+
+        it 'warns and does not open url' do
+          expect(subject).not_to receive(:system)
+          expect(prompt).to receive(:warn).with(/Invalid URL scheme/)
+          subject.send(:handle_session_action, :open_url, unsafe_session)
+        end
+      end
+
+      context 'with invalid url format' do
+        let(:invalid_session) { instance_double(JulesRuby::Models::Session, name: 'sessions/1', url: '::invalid::') }
+
+        before do
+          allow(prompt).to receive(:warn)
+          allow(prompt).to receive(:keypress)
+          # Ensure we hit the rescue block
+          allow(URI).to receive(:parse).and_raise(URI::InvalidURIError)
+        end
+
+        it 'handles invalid uri error safely' do
+          expect(subject).not_to receive(:system)
+          subject.send(:handle_session_action, :open_url, invalid_session)
+        end
       end
     end
 
