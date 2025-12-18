@@ -89,8 +89,10 @@ module JulesRuby
         state == 'COMPLETED'
       end
 
+      ACTIVE_STATES = %w[QUEUED PLANNING AWAITING_PLAN_APPROVAL AWAITING_USER_FEEDBACK IN_PROGRESS].freeze
+
       def active?
-        %w[QUEUED PLANNING AWAITING_PLAN_APPROVAL AWAITING_USER_FEEDBACK IN_PROGRESS].include?(state)
+        ACTIVE_STATES.include?(state)
       end
 
       private
