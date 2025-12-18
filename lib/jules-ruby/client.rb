@@ -14,6 +14,14 @@ module JulesRuby
       'Accept' => 'application/json'
     }.freeze
 
+    ERROR_MAPPING = {
+      400 => [BadRequestError, 'Bad request'],
+      401 => [AuthenticationError, 'Invalid API key'],
+      403 => [ForbiddenError, 'Access forbidden'],
+      404 => [NotFoundError, 'Resource not found'],
+      429 => [RateLimitError, 'Rate limit exceeded']
+    }.freeze
+
     def initialize(api_key: nil, base_url: nil, timeout: nil)
       @configuration = JulesRuby.configuration&.dup || Configuration.new
 
@@ -107,24 +115,44 @@ module JulesRuby
       body = response.read
       status = response.status
 
-      case status
-      when 200..299
-        body.nil? || body.empty? ? {} : JSON.parse(body)
-      when 400
-        raise BadRequestError.new('Bad request', status_code: status, response: body)
-      when 401
-        raise AuthenticationError.new('Invalid API key', status_code: status, response: body)
-      when 403
-        raise ForbiddenError.new('Access forbidden', status_code: status, response: body)
-      when 404
-        raise NotFoundError.new('Resource not found', status_code: status, response: body)
-      when 429
-        raise RateLimitError.new('Rate limit exceeded', status_code: status, response: body)
-      when 500..599
-        raise ServerError.new('Server error', status_code: status, response: body)
-      else
-        raise Error.new("Unexpected response: #{status}", status_code: status, response: body)
+      return parse_success_response(body) if (200..299).cover?(status)
+
+      handle_error_response(status, body)
+    end
+
+    def parse_success_response(body)
+      body.nil? || body.empty? ? {} : JSON.parse(body)
+    end
+
+    def handle_error_response(status, body)
+      if (klass, default_msg = ERROR_MAPPING[status])
+        raise klass.new(extract_error_message(body, default_msg), status_code: status, response: body)
       end
+
+      if (500..599).cover?(status)
+        raise ServerError.new(extract_error_message(body, 'Server error'), status_code: status, response: body)
+      end
+
+      raise Error.new("Unexpected response: #{status}", status_code: status, response: body)
+    end
+
+    def extract_error_message(body, default)
+      return default if body.nil? || body.empty?
+
+      data = JSON.parse(body)
+      return default unless data.is_a?(Hash)
+
+      if data['error'].is_a?(Hash)
+        data.dig('error', 'message') || default
+      elsif data['error'].is_a?(String)
+        data['error']
+      elsif data['message'].is_a?(String)
+        data['message']
+      else
+        default
+      end
+    rescue JSON::ParserError
+      default
     end
   end
 end
