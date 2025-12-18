@@ -61,6 +61,43 @@ RSpec.describe JulesRuby::Client do
 
       expect { client.get('/sessions') }.to raise_error(JulesRuby::Error)
     end
+
+    describe 'error message extraction' do
+      it 'extracts message from nested error object' do
+        stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+          .to_return(status: 400, body: '{"error": {"message": "specific error"}}')
+
+        expect { client.get('/sessions') }.to raise_error(JulesRuby::BadRequestError, 'specific error')
+      end
+
+      it 'extracts message from top-level message field' do
+        stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+          .to_return(status: 400, body: '{"message": "simple message"}')
+
+        expect { client.get('/sessions') }.to raise_error(JulesRuby::BadRequestError, 'simple message')
+      end
+
+      it 'falls back to default when body is not a hash' do
+        stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+          .to_return(status: 400, body: '["array"]')
+
+        expect { client.get('/sessions') }.to raise_error(JulesRuby::BadRequestError, 'Bad request')
+      end
+
+      it 'falls back to default when no error message found in hash' do
+        stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+          .to_return(status: 400, body: '{"other": "data"}')
+
+        expect { client.get('/sessions') }.to raise_error(JulesRuby::BadRequestError, 'Bad request')
+      end
+
+      it 'falls back to default when JSON is invalid' do
+        stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+          .to_return(status: 400, body: 'invalid-json')
+
+        expect { client.get('/sessions') }.to raise_error(JulesRuby::BadRequestError, 'Bad request')
+      end
+    end
   end
 
   describe '#initialize' do
