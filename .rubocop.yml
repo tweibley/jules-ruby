@@ -8,6 +8,7 @@ AllCops:
     - 'Rakefile'
     - '*.gemspec'
     - 'test-jules-ruby.rb'
+    - 'lib/jules-ruby/cli/banner.rb'
 
 Style/Documentation:
   Enabled: false

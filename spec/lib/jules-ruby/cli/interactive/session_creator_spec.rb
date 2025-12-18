@@ -46,7 +46,6 @@ RSpec.describe JulesRuby::Interactive::SessionCreator do
 
         creator.run
       end
-
     end
 
     context 'when sources exist' do
