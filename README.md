@@ -1,13 +1,13 @@
 [![Gem Version](https://badge.fury.io/rb/jules-ruby.svg)](https://badge.fury.io/rb/jules-ruby)
 [![CI](https://github.com/tweibley/jules-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/tweibley/jules-ruby/actions/workflows/ci.yml)
 
-# Jules Ruby
+# jules-ruby
 
 <p align="center">
-  <img src="assets/banner.png" alt="Jules Ruby" width="600">
+  <img src="assets/banner.png" alt="jules-ruby" width="600">
 </p>
 
-A Ruby gem for interacting with the [Jules API](https://developers.google.com/jules/api) to programmatically create and manage asynchronous coding tasks.
+A Ruby gem for interacting with the [jules API](https://developers.google.com/jules/api) to programmatically create and manage asynchronous coding tasks.
 
 > 🚀 **New!** Use jules-ruby directly from [Gemini CLI](https://github.com/google-gemini/gemini-cli) with our extension: [jules-ruby-gemini-cli-extension](https://github.com/tweibley/jules-ruby-gemini-cli-extension)
 
@@ -62,7 +62,7 @@ client = JulesRuby::Client.new(api_key: 'different_api_key')
 
 ## Command-Line Interface
 
-The gem includes a CLI for interacting with the Jules API from your terminal.
+The gem includes a CLI for interacting with the jules API from your terminal.
 
 ### Installation
 
