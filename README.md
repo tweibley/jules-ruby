@@ -1,13 +1,15 @@
+[![Gem Version](https://badge.fury.io/rb/jules-ruby.svg)](https://badge.fury.io/rb/jules-ruby)
+[![CI](https://github.com/tweibley/jules-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/tweibley/jules-ruby/actions/workflows/ci.yml)
+
 # Jules Ruby
 
 <p align="center">
   <img src="assets/banner.png" alt="Jules Ruby" width="600">
 </p>
 
-[![Gem Version](https://badge.fury.io/rb/jules-ruby.svg)](https://badge.fury.io/rb/jules-ruby)
-[![CI](https://github.com/tweibley/jules-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/tweibley/jules-ruby/actions/workflows/ci.yml)
-
 A Ruby gem for interacting with the [Jules API](https://developers.google.com/jules/api) to programmatically create and manage asynchronous coding tasks.
+
+> 🚀 **New!** Use jules-ruby directly from [Gemini CLI](https://github.com/google-gemini/gemini-cli) with our extension: [jules-ruby-gemini-cli-extension](https://github.com/tweibley/jules-ruby-gemini-cli-extension)
 
 ## Installation
 
