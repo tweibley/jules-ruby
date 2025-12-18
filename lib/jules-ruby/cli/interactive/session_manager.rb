@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'uri'
 require_relative '../prompts'
 require_relative 'activity_renderer'
 require_relative 'session_creator'
@@ -193,7 +194,7 @@ module JulesRuby
           view_activities(session)
           :refresh
         when :open_url
-          system('open', session.url) if session.url
+          open_session_url(session)
           nil
         when :delete then delete_session?(session) ? :deleted : nil
         when :refresh then refresh_session(session)
@@ -250,6 +251,24 @@ module JulesRuby
         puts Prompts.rgb_color("\n  ✅ Session deleted!", :purple)
         @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
         true
+      end
+
+      def open_session_url(session)
+        return unless session.url
+
+        if safe_url?(session.url)
+          system('open', session.url)
+        else
+          @prompt.warn(Prompts.rgb_color("Invalid URL scheme: #{session.url}", :purple))
+          @prompt.keypress(Prompts.rgb_color('Press any key to continue...', :dim))
+        end
+      end
+
+      def safe_url?(url)
+        uri = URI.parse(url)
+        %w[http https].include?(uri.scheme)
+      rescue URI::InvalidURIError
+        false
       end
 
       def refresh_session(session)
