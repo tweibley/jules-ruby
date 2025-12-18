@@ -62,8 +62,8 @@ RSpec.describe JulesRuby::Commands::Sessions do
   describe '#create' do
     it 'creates session' do
       allow(commands).to receive(:options).and_return({ prompt: 'fix', source: 'src' })
-      allow(sessions_resource).to receive(:create).and_return(instance_double(JulesRuby::Models::Session, name: 'n',
-                                                                                                          url: 'u', state: 's'))
+      session_double = instance_double(JulesRuby::Models::Session, name: 'n', url: 'u', state: 's')
+      allow(sessions_resource).to receive(:create).and_return(session_double)
       commands.create
       expect(sessions_resource).to have_received(:create)
     end

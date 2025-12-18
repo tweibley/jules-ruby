@@ -83,6 +83,27 @@ RSpec.describe JulesRuby::Client do
     end
   end
 
+  describe '#build_headers' do
+    # Protocol::HTTP::Headers accepts both Array of Arrays and Hash via .to_a conversion
+    # This test documents the expected return type for the optimization in this method
+    it 'returns a Hash compatible with Protocol::HTTP::Headers' do
+      headers = client.send(:build_headers)
+
+      expect(headers).to be_a(Hash)
+      expect(headers['X-Goog-Api-Key']).to eq(client.configuration.api_key)
+      expect(headers['Content-Type']).to eq('application/json')
+      expect(headers['Accept']).to eq('application/json')
+    end
+
+    it 'returns a new Hash instance each time (not the frozen constant)' do
+      headers1 = client.send(:build_headers)
+      headers2 = client.send(:build_headers)
+
+      expect(headers1).not_to be(headers2)
+      expect(headers1).not_to be_frozen
+    end
+  end
+
   # Resource accessors
   describe '#post' do
     before do
