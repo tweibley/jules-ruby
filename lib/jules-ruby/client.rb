@@ -70,28 +70,37 @@ module JulesRuby
     def request(method, path, params: {}, body: nil)
       url = build_url(path, params)
 
-      Async do
+      result = Async do
         internet = Async::HTTP::Internet.new
-
         begin
-          headers = build_headers
-
-          response = case method
-                     when :get
-                       internet.get(url, headers)
-                     when :post
-                       internet.post(url, headers, body ? JSON.generate(body) : nil)
-                     when :delete
-                       internet.delete(url, headers)
-                     else
-                       raise ArgumentError, "Unsupported HTTP method: #{method}"
-                     end
-
-          handle_response(response)
+          perform_request(internet, method, url, body)
+        rescue StandardError => e
+          e # Return exception to be raised outside Async block
         ensure
           internet.close
         end
       end.wait
+
+      raise result if result.is_a?(StandardError)
+
+      result
+    end
+
+    def perform_request(internet, method, url, body)
+      headers = build_headers
+
+      response = case method
+                 when :get
+                   internet.get(url, headers)
+                 when :post
+                   internet.post(url, headers, body ? JSON.generate(body) : nil)
+                 when :delete
+                   internet.delete(url, headers)
+                 else
+                   raise ArgumentError, "Unsupported HTTP method: #{method}"
+                 end
+
+      handle_response(response)
     end
 
     def build_url(path, params)
