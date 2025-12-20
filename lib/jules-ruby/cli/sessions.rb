@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'time'
 require_relative 'base'
 
 module JulesRuby
@@ -148,7 +149,8 @@ module JulesRuby
         puts '-' * 90
         sessions.each do |s|
           title = truncate(s.title || s.prompt, 28)
-          updated = s.update_time ? Time.parse(s.update_time).strftime('%Y-%m-%d %H:%M') : 'N/A'
+          # Optimization: Time.iso8601 is ~3x faster than Time.parse
+          updated = s.update_time ? Time.iso8601(s.update_time).strftime('%Y-%m-%d %H:%M') : 'N/A'
           puts format('%<id>-20s %<title>-30s %<state>-20s %<updated>-15s',
                       id: s.id, title: title, state: s.state, updated: updated)
         end
