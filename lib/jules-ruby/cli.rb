@@ -55,6 +55,9 @@ module JulesRuby
     desc 'interactive', 'Start interactive mode'
     def interactive
       JulesRuby::Interactive.new.start
+    rescue JulesRuby::ConfigurationError => e
+      Prompts.print_config_error(e)
+      exit 1
     end
 
     map %w[-i] => :interactive

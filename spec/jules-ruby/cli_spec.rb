@@ -207,6 +207,19 @@ RSpec.describe JulesRuby::CLI do
 
       expect(interactive_mock).to have_received(:start)
     end
+
+    context 'when configuration is invalid' do
+      it 'outputs configuration error' do
+        allow(JulesRuby::Interactive).to receive(:new).and_raise(JulesRuby::ConfigurationError.new('API key missing'))
+
+        output = capture_stderr do
+          expect { described_class.start(%w[interactive]) }.to raise_error(SystemExit)
+        end
+
+        expect(output).to include('❌ Configuration Error')
+        expect(output).to include('API key missing')
+      end
+    end
   end
 
   describe 'sources' do
@@ -309,7 +322,20 @@ RSpec.describe JulesRuby::CLI do
         output = capture_stderr do
           expect { described_class.start(['sources', 'show', 'sources/nonexistent']) }.to raise_error(SystemExit)
         end
-        expect(output).to include('Error:')
+        expect(output).to include('❌ Error')
+      end
+
+      context 'when configuration is invalid' do
+        before do
+          allow(JulesRuby::Client).to receive(:new).and_raise(JulesRuby::ConfigurationError.new('API key missing'))
+        end
+
+        it 'outputs configuration error' do
+          output = capture_stderr do
+            expect { described_class.start(%w[sources list]) }.to raise_error(SystemExit)
+          end
+          expect(output).to include('❌ Configuration Error')
+        end
       end
 
       context 'when list fails' do
@@ -568,7 +594,7 @@ RSpec.describe JulesRuby::CLI do
                                     ])
             end.to raise_error(SystemExit)
           end
-          expect(output).to include('Error:')
+          expect(output).to include('❌ Error')
         end
       end
     end
@@ -596,7 +622,7 @@ RSpec.describe JulesRuby::CLI do
           output = capture_stderr do
             expect { described_class.start(%w[sessions approve abc123]) }.to raise_error(SystemExit)
           end
-          expect(output).to include('Error:')
+          expect(output).to include('❌ Error')
         end
       end
     end
@@ -628,7 +654,7 @@ RSpec.describe JulesRuby::CLI do
               described_class.start(['sessions', 'message', 'abc123', '--prompt=test'])
             end.to raise_error(SystemExit)
           end
-          expect(output).to include('Error:')
+          expect(output).to include('❌ Error')
         end
       end
     end
@@ -656,7 +682,7 @@ RSpec.describe JulesRuby::CLI do
           output = capture_stderr do
             expect { described_class.start(%w[sessions delete abc123]) }.to raise_error(SystemExit)
           end
-          expect(output).to include('Error:')
+          expect(output).to include('❌ Error')
         end
       end
     end
@@ -962,7 +988,7 @@ RSpec.describe JulesRuby::CLI do
           output = capture_stderr do
             expect { described_class.start(%w[activities list notfound]) }.to raise_error(SystemExit)
           end
-          expect(output).to include('Error:')
+          expect(output).to include('❌ Error')
         end
       end
 
@@ -989,7 +1015,7 @@ RSpec.describe JulesRuby::CLI do
               described_class.start(['activities', 'show', 'sessions/abc123/activities/notfound'])
             end.to raise_error(SystemExit)
           end
-          expect(output).to include('Error:')
+          expect(output).to include('❌ Error')
         end
       end
     end

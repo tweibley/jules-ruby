@@ -35,9 +35,9 @@ RSpec.describe JulesRuby::Commands::Base do
 
   describe '#error_exit' do
     it 'warns and exits' do
-      allow(command).to receive(:warn)
+      allow($stderr).to receive(:puts)
       expect { command.call_error(StandardError.new('fail')) }.to raise_error(SystemExit)
-      expect(command).to have_received(:warn).with('Error: fail')
+      expect($stderr).to have_received(:puts).with(include('❌ Error'))
     end
 
     it 'outputs JSON error if format is json' do
