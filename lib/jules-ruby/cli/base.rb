@@ -3,6 +3,7 @@
 require 'thor'
 require 'json'
 require 'time'
+require_relative 'prompts'
 
 module JulesRuby
   module Commands
@@ -21,8 +22,10 @@ module JulesRuby
         def error_exit(error)
           if options[:format] == 'json'
             puts JSON.generate({ error: error.message })
+          elsif error.is_a?(JulesRuby::ConfigurationError)
+            Prompts.print_config_error(error)
           else
-            warn "Error: #{error.message}"
+            Prompts.print_error(error.message)
           end
           exit 1
         end

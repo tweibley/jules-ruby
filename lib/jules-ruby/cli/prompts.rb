@@ -179,6 +179,25 @@ module JulesRuby
       def print_banner
         Banner.print_banner
       end
+
+      def print_error(message)
+        $stderr.puts
+        $stderr.puts "  #{PASTEL.red('❌ Error')}"
+        $stderr.puts "  #{rgb_color('─' * 50, :muted)}"
+        $stderr.puts "  #{message}"
+        $stderr.puts
+      end
+
+      def print_config_error(error)
+        $stderr.puts
+        $stderr.puts "  #{PASTEL.red('❌ Configuration Error')}"
+        $stderr.puts "  #{rgb_color('─' * 50, :muted)}"
+        $stderr.puts "  #{error.message}"
+        $stderr.puts
+        $stderr.puts '  To fix this, set your API key:'
+        $stderr.puts "    #{rgb_color('export JULES_API_KEY=your_api_key_here', :lavender)}"
+        $stderr.puts
+      end
     end
   end
 end
