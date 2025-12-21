@@ -52,7 +52,8 @@ RSpec.describe JulesRuby::Interactive::SessionCreator do
       before do
         allow(sources_resource).to receive(:all).and_return([source_obj])
         allow(prompt).to receive(:select).and_return(source_obj)
-        allow(prompt).to receive(:ask).and_return('main', 'Task', 'My Session')
+        allow(prompt).to receive(:ask).and_return('main', 'My Session')
+        allow(prompt).to receive(:multiline).and_return(["Task\n"])
         allow(prompt).to receive(:yes?).and_return(true)
       end
 
@@ -79,7 +80,8 @@ RSpec.describe JulesRuby::Interactive::SessionCreator do
 
       it 'truncates long prompts in summary' do
         long_prompt = 'a' * 60
-        allow(prompt).to receive(:ask).and_return('main', long_prompt, 'My Session')
+        allow(prompt).to receive(:ask).and_return('main', 'My Session')
+        allow(prompt).to receive(:multiline).and_return(["#{long_prompt}\n"])
 
         expect(sessions_resource).to receive(:create).and_return(session_obj)
         creator.run
