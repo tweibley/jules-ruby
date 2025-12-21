@@ -53,7 +53,9 @@ module JulesRuby
       # Apply true-color RGB to text using ANSI escape sequences
       def rgb_color(text, color_name)
         r, g, b = COLORS[color_name]
-        "\e[38;2;#{r};#{g};#{b}m#{text}\e[0m"
+        # Sanitize input to prevent ANSI injection
+        safe_text = PASTEL.strip(text.to_s)
+        "\e[38;2;#{r};#{g};#{b}m#{safe_text}\e[0m"
       end
 
       def prompt
