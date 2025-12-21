@@ -54,10 +54,18 @@ module JulesRuby
 
       def ask_for_prompt
         puts
-        @prompt.ask(Prompts.rgb_color('What would you like Jules to do?', :lavender)) do |q|
-          q.required true
-          q.validate(/\S/, 'Prompt cannot be empty')
+        input = ''
+        loop do
+          lines = @prompt.multiline(Prompts.rgb_color('What would you like Jules to do?', :lavender)) do |q|
+            q.help 'Press Ctrl+D to finish'
+            q.default 'Refactor the login module...'
+          end
+          input = lines.join.strip
+          break unless input.empty?
+
+          @prompt.error('Prompt cannot be empty')
         end
+        input
       end
 
       def display_session_summary(source, branch, task_prompt, title, auto_pr)

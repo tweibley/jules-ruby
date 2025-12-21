@@ -221,4 +221,30 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
       expect(subject.send(:truncate, 'abc', 10)).to eq('abc')
     end
   end
+
+  describe '#send_message' do
+    let(:session) { instance_double(JulesRuby::Models::Session, name: 'sessions/123') }
+
+    before do
+      allow(sessions_resource).to receive(:send_message)
+      allow(sessions_resource).to receive(:find)
+      allow(prompt).to receive(:keypress)
+    end
+
+    it 'sends the message using multiline input' do
+      question = double('question')
+      allow(prompt).to receive(:multiline).and_yield(question).and_return(%W[Hello\n World\n])
+      expect(question).to receive(:help).with(/Ctrl\+D/)
+
+      expect(sessions_resource).to receive(:send_message).with(session.name, prompt: "Hello\nWorld")
+
+      subject.send(:send_message, session)
+    end
+
+    it 'does nothing if message is empty' do
+      allow(prompt).to receive(:multiline).and_return([])
+      expect(sessions_resource).not_to receive(:send_message)
+      subject.send(:send_message, session)
+    end
+  end
 end

@@ -109,7 +109,7 @@ RSpec.describe JulesRuby::Interactive::SessionManager do
 
     it 'allows sending a message' do
       expect(prompt).to receive(:select).and_return(:message, :back)
-      expect(prompt).to receive(:ask).and_return('hello')
+      expect(prompt).to receive(:multiline).and_return(["hello\n"])
       expect(sessions_resource).to receive(:send_message).with(session_obj.name, prompt: 'hello')
       expect(sessions_resource).to receive(:find).with(session_obj.name).and_return(session_obj)
 

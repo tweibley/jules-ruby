@@ -212,8 +212,11 @@ module JulesRuby
       end
 
       def send_message(session)
-        msg = @prompt.ask(Prompts.rgb_color('Message to send:', :lavender))
-        return unless msg && !msg.empty?
+        lines = @prompt.multiline(Prompts.rgb_color('Message to send:', :lavender)) do |q|
+          q.help 'Press Ctrl+D to finish'
+        end
+        msg = lines.join.strip
+        return if msg.empty?
 
         Prompts.with_spinner('Sending message...') do
           @client.sessions.send_message(session.name, prompt: msg)

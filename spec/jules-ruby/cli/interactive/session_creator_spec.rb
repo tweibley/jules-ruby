@@ -36,12 +36,28 @@ RSpec.describe JulesRuby::Interactive::SessionCreator do
   end
 
   describe '#ask_for_prompt' do
-    it 'configures the prompt question' do
-      question = instance_double(TTY::Prompt::Question)
-      allow(prompt).to receive(:ask).and_yield(question)
-      expect(question).to receive(:required).with(true)
-      expect(question).to receive(:validate).with(/\S/, anything)
+    it 'requests multiline input' do
+      allow(prompt).to receive(:multiline).and_return(["Input\n"])
+      expect(prompt).to receive(:multiline).with(/What would you like Jules to do/)
 
+      result = subject.send(:ask_for_prompt)
+      expect(result).to eq('Input')
+    end
+
+    it 'loops until input is provided' do
+      # First return empty, then valid input
+      allow(prompt).to receive(:multiline).and_return([], ["Valid input\n"])
+      expect(prompt).to receive(:error).with(/Prompt cannot be empty/)
+
+      result = subject.send(:ask_for_prompt)
+      expect(result).to eq('Valid input')
+    end
+
+    it 'configures the prompt' do
+      question = double('question')
+      allow(prompt).to receive(:multiline).and_yield(question).and_return(['input'])
+      expect(question).to receive(:help).with(/Ctrl\+D/)
+      expect(question).to receive(:default)
       subject.send(:ask_for_prompt)
     end
   end
