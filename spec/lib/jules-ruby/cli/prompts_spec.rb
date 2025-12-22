@@ -165,6 +165,16 @@ RSpec.describe JulesRuby::Prompts do
     end
   end
 
+  describe '.rgb_color' do
+    it 'sanitizes input text by stripping existing ANSI codes' do
+      unsafe_text = "Safe\e[31mUnsafe\e[0m"
+      result = described_class.rgb_color(unsafe_text, :purple)
+      expect(result).not_to include("\e[31m")
+      expect(result).to include('SafeUnsafe')
+      expect(result).to start_with("\e[38;2;")
+    end
+  end
+
   describe '.highlight' do
     it 'returns text with lavender color codes' do
       result = described_class.highlight('test')
