@@ -63,6 +63,14 @@ RSpec.describe JulesRuby::Resources::Sessions do
       session = sessions.find('/sessions/slash123')
       expect(session.name).to eq('sessions/slash123')
     end
+
+    it 'raises descriptive error for nil ID' do
+      expect { sessions.find(nil) }.to raise_error(ArgumentError, /Session ID or name is required/)
+    end
+
+    it 'raises descriptive error for empty ID' do
+      expect { sessions.find('') }.to raise_error(ArgumentError, /Session ID or name is required/)
+    end
   end
 
   describe '#create' do
@@ -210,6 +218,14 @@ RSpec.describe JulesRuby::Resources::Sources do
       source = sources.find('/sources/github/owner/repo')
       expect(source.name).to eq('sources/github/owner/repo')
     end
+
+    it 'raises descriptive error for nil source name' do
+      expect { sources.find(nil) }.to raise_error(ArgumentError, /Source name is required/)
+    end
+
+    it 'raises descriptive error for empty source name' do
+      expect { sources.find('') }.to raise_error(ArgumentError, /Source name is required/)
+    end
   end
 
   describe '#each and #all' do
@@ -262,6 +278,10 @@ RSpec.describe JulesRuby::Resources::Activities do
       result = activities.list('abc')
       expect(result[:activities].first.name).to eq('sessions/abc/activities/1')
     end
+
+    it 'raises descriptive error for nil session ID' do
+      expect { activities.list(nil) }.to raise_error(ArgumentError, /Session ID or name is required/)
+    end
   end
 
   describe '#find' do
@@ -282,6 +302,14 @@ RSpec.describe JulesRuby::Resources::Activities do
     it 'finds activity with leading slash' do
       activity = activities.find('/sessions/abc/activities/xyz')
       expect(activity.name).to eq('sessions/abc/activities/xyz')
+    end
+
+    it 'raises descriptive error for nil activity name' do
+      expect { activities.find(nil) }.to raise_error(ArgumentError, /Activity name is required/)
+    end
+
+    it 'raises descriptive error for empty activity name' do
+      expect { activities.find('') }.to raise_error(ArgumentError, /Activity name is required/)
     end
   end
 

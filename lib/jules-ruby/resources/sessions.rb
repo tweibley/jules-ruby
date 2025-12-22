@@ -112,6 +112,8 @@ module JulesRuby
       private
 
       def normalize_session_path(name)
+        raise ArgumentError, 'Session ID or name is required' if name.nil? || name.to_s.strip.empty?
+
         if name.start_with?('sessions/')
           "/#{name}"
         elsif name.start_with?('/sessions/')
