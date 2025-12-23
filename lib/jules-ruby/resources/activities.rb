@@ -29,6 +29,8 @@ module JulesRuby
       # @param name [String] The full activity name (e.g., "sessions/123/activities/abc")
       # @return [Models::Activity] The activity object
       def find(name)
+        raise ArgumentError, 'Activity name cannot be nil or empty' if name.nil? || name.to_s.strip.empty?
+
         path = name.start_with?('/') ? name : "/#{name}"
         response = get(path)
         Models::Activity.new(response)
@@ -63,6 +65,8 @@ module JulesRuby
       private
 
       def normalize_session_path(name)
+        raise ArgumentError, 'Session name cannot be nil or empty' if name.nil? || name.to_s.strip.empty?
+
         if name.start_with?('sessions/')
           "/#{name}"
         elsif name.start_with?('/sessions/')

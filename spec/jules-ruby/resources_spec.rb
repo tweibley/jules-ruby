@@ -63,6 +63,14 @@ RSpec.describe JulesRuby::Resources::Sessions do
       session = sessions.find('/sessions/slash123')
       expect(session.name).to eq('sessions/slash123')
     end
+
+    it 'raises error when name is nil' do
+      expect { sessions.find(nil) }.to raise_error(ArgumentError, 'Session name cannot be nil or empty')
+    end
+
+    it 'raises error when name is empty' do
+      expect { sessions.find('') }.to raise_error(ArgumentError, 'Session name cannot be nil or empty')
+    end
   end
 
   describe '#create' do
@@ -210,6 +218,10 @@ RSpec.describe JulesRuby::Resources::Sources do
       source = sources.find('/sources/github/owner/repo')
       expect(source.name).to eq('sources/github/owner/repo')
     end
+
+    it 'raises error when name is nil' do
+      expect { sources.find(nil) }.to raise_error(ArgumentError, 'Source name cannot be nil or empty')
+    end
   end
 
   describe '#each and #all' do
@@ -283,6 +295,10 @@ RSpec.describe JulesRuby::Resources::Activities do
       activity = activities.find('/sessions/abc/activities/xyz')
       expect(activity.name).to eq('sessions/abc/activities/xyz')
     end
+
+    it 'raises error when name is nil' do
+      expect { activities.find(nil) }.to raise_error(ArgumentError, 'Activity name cannot be nil or empty')
+    end
   end
 
   describe '#each and #all' do
@@ -334,6 +350,10 @@ RSpec.describe JulesRuby::Resources::Activities do
     it 'handles session with leading slash' do
       result = activities.list('/sessions/full')
       expect(result[:activities]).to eq([])
+    end
+
+    it 'raises error when session name is nil' do
+      expect { activities.list(nil) }.to raise_error(ArgumentError, 'Session name cannot be nil or empty')
     end
   end
 end
