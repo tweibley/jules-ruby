@@ -194,4 +194,28 @@ RSpec.describe JulesRuby::Prompts do
       described_class.print_banner
     end
   end
+
+  describe '.rgb_color' do
+    it 'applies color codes' do
+      result = described_class.rgb_color('text', :purple)
+      expect(result).to include("\e[38;2;147;112;219mtext\e[0m")
+    end
+
+    it 'sanitizes input string by stripping existing ANSI codes' do
+      input = "text\e[31m_red"
+      result = described_class.rgb_color(input, :purple)
+      expect(result).not_to include("\e[31m")
+      expect(result).to include('text_red')
+    end
+
+    it 'handles nil input gracefully' do
+      result = described_class.rgb_color(nil, :purple)
+      expect(result).to include("\e[0m")
+    end
+
+    it 'handles non-string input' do
+      result = described_class.rgb_color(123, :purple)
+      expect(result).to include('123')
+    end
+  end
 end
