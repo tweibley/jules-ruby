@@ -27,6 +27,8 @@ module JulesRuby
       # @param name [String] The full resource name (e.g., "sources/github/owner/repo")
       # @return [Models::Source] The source object
       def find(name)
+        raise ArgumentError, 'Source name cannot be nil or empty' if name.nil? || name.to_s.strip.empty?
+
         # Ensure the name has the correct format
         path = name.start_with?('/') ? name : "/#{name}"
         response = get(path)
