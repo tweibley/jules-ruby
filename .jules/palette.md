@@ -1,4 +1,4 @@
-## 2025-12-18 - Better API Error Messages
+## 2024-05-23 - Visual Alignment with Emojis
 
-**Learning:** Users were receiving generic "Bad request" or "Server error" messages even when the API provided specific error details in the JSON body. This forced users to inspect exception objects to find the root cause.
-**Action:** Updated `Client#handle_response` to parse and bubble up specific error messages from the API response (e.g., `error.message` in JSON), significantly improving debuggability.
+**Learning:** When formatting CLI tables that contain emojis, standard string padding methods (`ljust`/`rjust`) are insufficient because emojis typically have a string length of 1 but a visual width of 2 character cells. This causes column misalignment.
+**Action:** When padding a string that contains an emoji, compensate by reducing the padding width by 1 for each emoji present, or use a library that handles visual width (like `tty-table`). For simple cases without extra dependencies, manual adjustment works but requires care.
