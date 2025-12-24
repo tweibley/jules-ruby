@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'prompts'
 
 module JulesRuby
   module Commands
@@ -141,16 +142,30 @@ module JulesRuby
 
       def print_sessions_table(sessions)
         if sessions.empty?
-          puts 'No sessions found.'
+          puts Prompts.rgb_color('No sessions found.', :dim)
           return
         end
-        puts 'ID                   TITLE                          STATE                UPDATED        '
-        puts '-' * 90
+
+        headers = [
+          Prompts.rgb_color('ID'.ljust(20), :lavender),
+          Prompts.rgb_color('TITLE'.ljust(30), :lavender),
+          Prompts.rgb_color('STATE'.ljust(20), :lavender),
+          Prompts.rgb_color('UPDATED'.ljust(15), :lavender)
+        ]
+        puts headers.join(' ')
+        puts Prompts.rgb_color('-' * 88, :muted)
+
         sessions.each do |s|
           title = truncate(s.title || s.prompt, 28)
-          updated = s.update_time ? Time.parse(s.update_time).strftime('%Y-%m-%d %H:%M') : 'N/A'
-          puts format('%<id>-20s %<title>-30s %<state>-20s %<updated>-15s',
-                      id: s.id, title: title, state: s.state, updated: updated)
+          updated = Prompts.time_ago_in_words(s.update_time)
+          state_text = "#{Prompts.state_emoji(s.state)} #{Prompts.state_label(s.state)}"
+
+          line = String.new
+          line << Prompts.rgb_color(s.id.to_s.ljust(20), :purple)
+          line << ' ' << title.to_s.ljust(30)
+          line << ' ' << state_text.ljust(19)
+          line << ' ' << Prompts.rgb_color(updated, :dim)
+          puts line
         end
       end
 

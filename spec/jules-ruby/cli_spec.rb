@@ -37,6 +37,7 @@ RSpec.describe JulesRuby::CLI do
       'sessions' => [
         {
           'name' => 'sessions/abc123',
+          'id' => 'abc123',
           'title' => 'Test Session',
           'state' => 'ACTIVE',
           'prompt' => 'Fix the bug',
@@ -366,7 +367,7 @@ RSpec.describe JulesRuby::CLI do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
             .to_return(status: 200,
-                       body: { 'sessions' => [{ 'name' => 'sessions/abc', 'state' => 'ACTIVE',
+                       body: { 'sessions' => [{ 'name' => 'sessions/abc', 'id' => 'abc', 'state' => 'ACTIVE',
                                                 'prompt' => 'A very long prompt that exceeds ' \
                                                             'twenty-eight characters' }] }
                                .to_json,
@@ -383,7 +384,7 @@ RSpec.describe JulesRuby::CLI do
         before do
           stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
             .to_return(status: 200,
-                       body: { 'sessions' => [{ 'name' => 'sessions/abc', 'title' => 'Test',
+                       body: { 'sessions' => [{ 'name' => 'sessions/abc', 'id' => 'abc', 'title' => 'Test',
                                                 'state' => 'ACTIVE' }] }.to_json,
                        headers: { 'Content-Type' => 'application/json' })
         end
