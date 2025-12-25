@@ -196,6 +196,30 @@ RSpec.describe JulesRuby::Client do
       expect(result).to eq({})
     end
 
+    it 'raises ConfigurationError when base_url is insecure (HTTP) in production' do
+      expect {
+        described_class.new(api_key: 'test', base_url: 'http://api.example.com')
+      }.to raise_error(JulesRuby::ConfigurationError, /HTTPS/)
+    end
+
+    it 'allows HTTP for localhost' do
+      expect {
+        described_class.new(api_key: 'test', base_url: 'http://localhost:3000')
+      }.not_to raise_error
+    end
+
+    it 'allows HTTP for 127.0.0.1' do
+      expect {
+        described_class.new(api_key: 'test', base_url: 'http://127.0.0.1:3000')
+      }.not_to raise_error
+    end
+
+    it 'allows HTTP for ::1' do
+      expect {
+        described_class.new(api_key: 'test', base_url: 'http://[::1]:3000')
+      }.not_to raise_error
+    end
+
     it 'allows overriding timeout' do
       custom_client = described_class.new(timeout: 120)
       expect(custom_client.configuration.timeout).to eq(120)
