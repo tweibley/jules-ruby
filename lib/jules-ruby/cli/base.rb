@@ -3,6 +3,7 @@
 require 'thor'
 require 'json'
 require 'time'
+require 'pastel'
 
 module JulesRuby
   module Commands
@@ -22,7 +23,8 @@ module JulesRuby
           if options[:format] == 'json'
             puts JSON.generate({ error: error.message })
           else
-            warn "Error: #{error.message}"
+            pastel = Pastel.new
+            warn "#{pastel.red('Error:')} #{error.message}"
           end
           exit 1
         end
