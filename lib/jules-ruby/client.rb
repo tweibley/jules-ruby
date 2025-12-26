@@ -30,6 +30,9 @@ module JulesRuby
       @configuration.timeout = timeout if timeout
 
       validate_configuration!
+
+      # Cache the normalized base URL to avoid re-calculating it on every request
+      @normalized_base_url = @configuration.base_url.chomp('/')
     end
 
     # Resource accessors
@@ -95,13 +98,21 @@ module JulesRuby
     end
 
     def build_url(path, params)
-      # Ensure base_url ends without slash and path starts with slash
-      base = configuration.base_url.chomp('/')
+      # Use cached base url if available (initialized in constructor)
+      # If configuration.base_url changed (which shouldn't happen often), we might use stale value unless we re-check
+      # But for this client, we assume configuration is stable after init.
+      base = @normalized_base_url || configuration.base_url.chomp('/')
+
+      # Ensure path starts with slash
       path = "/#{path}" unless path.start_with?('/')
 
-      uri = URI.parse("#{base}#{path}")
-      uri.query = URI.encode_www_form(params.compact) unless params.empty?
-      uri.to_s
+      # Optimization: Use string interpolation instead of URI.parse which is expensive
+      # The base URL and path are assumed to be safe or already encoded if needed
+      if params.nil? || params.empty?
+        "#{base}#{path}"
+      else
+        "#{base}#{path}?#{URI.encode_www_form(params.compact)}"
+      end
     end
 
     def build_headers
