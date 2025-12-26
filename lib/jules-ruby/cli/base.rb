@@ -3,6 +3,7 @@
 require 'thor'
 require 'json'
 require 'time'
+require 'pastel'
 
 module JulesRuby
   module Commands
@@ -22,7 +23,13 @@ module JulesRuby
           if options[:format] == 'json'
             puts JSON.generate({ error: error.message })
           else
-            warn "Error: #{error.message}"
+            pastel = Pastel.new
+            warn "#{pastel.red('Error:')} #{error.message}"
+
+            # Add helpful hint for configuration errors
+            if error.is_a?(JulesRuby::ConfigurationError)
+              warn pastel.dim("\nTip: You can set the JULES_API_KEY environment variable.")
+            end
           end
           exit 1
         end

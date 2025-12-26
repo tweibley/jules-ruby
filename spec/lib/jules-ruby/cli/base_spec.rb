@@ -37,7 +37,14 @@ RSpec.describe JulesRuby::Commands::Base do
     it 'warns and exits' do
       allow(command).to receive(:warn)
       expect { command.call_error(StandardError.new('fail')) }.to raise_error(SystemExit)
-      expect(command).to have_received(:warn).with('Error: fail')
+      # Pastel output includes ANSI codes, so we match part of the message
+      expect(command).to have_received(:warn).with(include('Error:', 'fail'))
+    end
+
+    it 'outputs hint for ConfigurationError' do
+      allow(command).to receive(:warn)
+      expect { command.call_error(JulesRuby::ConfigurationError.new('config fail')) }.to raise_error(SystemExit)
+      expect(command).to have_received(:warn).with(include('Tip: You can set the JULES_API_KEY'))
     end
 
     it 'outputs JSON error if format is json' do
