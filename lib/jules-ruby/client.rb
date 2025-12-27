@@ -29,6 +29,8 @@ module JulesRuby
       @configuration.base_url = base_url if base_url
       @configuration.timeout = timeout if timeout
 
+      @base_url_string = @configuration.base_url.chomp('/')
+
       validate_configuration!
     end
 
@@ -95,13 +97,20 @@ module JulesRuby
     end
 
     def build_url(path, params)
-      # Ensure base_url ends without slash and path starts with slash
-      base = configuration.base_url.chomp('/')
       path = "/#{path}" unless path.start_with?('/')
 
-      uri = URI.parse("#{base}#{path}")
-      uri.query = URI.encode_www_form(params.compact) unless params.empty?
-      uri.to_s
+      # Optimization: Avoid URI.parse and string allocations for base URL
+      url = "#{@base_url_string}#{path}"
+
+      unless params.empty?
+        compact_params = params.compact
+        unless compact_params.empty?
+          query = URI.encode_www_form(compact_params)
+          url = "#{url}?#{query}"
+        end
+      end
+
+      url
     end
 
     def build_headers
