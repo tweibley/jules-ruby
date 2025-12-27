@@ -3,6 +3,7 @@
 require 'thor'
 require 'json'
 require 'time'
+require 'jules-ruby/errors'
 
 module JulesRuby
   module Commands
@@ -23,6 +24,11 @@ module JulesRuby
             puts JSON.generate({ error: error.message })
           else
             warn "Error: #{error.message}"
+            if error.is_a?(JulesRuby::ConfigurationError)
+              warn ""
+              warn "Hint: Set the JULES_API_KEY environment variable to fix this."
+              warn "  export JULES_API_KEY=your_api_key"
+            end
           end
           exit 1
         end
