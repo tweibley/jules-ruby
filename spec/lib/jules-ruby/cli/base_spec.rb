@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 require 'jules-ruby/cli/base'
+require 'jules-ruby/errors'
 
 # Test helper class defined outside RSpec block to avoid Lint/ConstantDefinitionInBlock
 class TestBaseCommand < JulesRuby::Commands::Base
@@ -45,6 +46,23 @@ RSpec.describe JulesRuby::Commands::Base do
       allow($stdout).to receive(:puts)
       expect { command.call_error(StandardError.new('fail')) }.to raise_error(SystemExit)
       expect($stdout).to have_received(:puts).with(include('"error":"fail"'))
+    end
+
+    context 'with ConfigurationError' do
+      let(:error) { JulesRuby::ConfigurationError.new('Original error message') }
+
+      it 'outputs the error message and a hint' do
+        # Expectation order matters or use allow/have_received
+        allow(command).to receive(:warn)
+        allow(command).to receive(:exit)
+
+        command.call_error(error)
+
+        expect(command).to have_received(:warn).with('Error: Original error message').ordered
+        expect(command).to have_received(:warn).with('').ordered
+        expect(command).to have_received(:warn).with('Hint: Set the JULES_API_KEY environment variable to fix this.').ordered
+        expect(command).to have_received(:warn).with('  export JULES_API_KEY=your_api_key').ordered
+      end
     end
   end
 end
