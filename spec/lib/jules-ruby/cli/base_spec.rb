@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 require 'jules-ruby/cli/base'
+require 'jules-ruby/errors'
 
 # Test helper class defined outside RSpec block to avoid Lint/ConstantDefinitionInBlock
 class TestBaseCommand < JulesRuby::Commands::Base
@@ -34,10 +35,35 @@ RSpec.describe JulesRuby::Commands::Base do
   end
 
   describe '#error_exit' do
-    it 'warns and exits' do
+    before do
       allow(command).to receive(:warn)
+    end
+
+    it 'warns and exits' do
       expect { command.call_error(StandardError.new('fail')) }.to raise_error(SystemExit)
-      expect(command).to have_received(:warn).with('Error: fail')
+      # Match both plain and colored output (Pastel might be disabled in test env)
+      expect(command).to have_received(:warn).with(/Error:.*fail/)
+    end
+
+    it 'provides a hint for ConfigurationError' do
+      error = JulesRuby::ConfigurationError.new('config fail')
+      expect { command.call_error(error) }.to raise_error(SystemExit)
+      expect(command).to have_received(:warn).with(/Error:.*config fail/)
+      expect(command).to have_received(:warn).with(/Hint: Check your environment variables/)
+    end
+
+    it 'provides a hint for AuthenticationError' do
+      error = JulesRuby::AuthenticationError.new('auth fail')
+      expect { command.call_error(error) }.to raise_error(SystemExit)
+      expect(command).to have_received(:warn).with(/Error:.*auth fail/)
+      expect(command).to have_received(:warn).with(/Hint: Verify your API key is correct/)
+    end
+
+    it 'provides a hint for NotFoundError' do
+      error = JulesRuby::NotFoundError.new('not found')
+      expect { command.call_error(error) }.to raise_error(SystemExit)
+      expect(command).to have_received(:warn).with(/Error:.*not found/)
+      expect(command).to have_received(:warn).with(/Hint: The requested resource could not be found/)
     end
 
     it 'outputs JSON error if format is json' do
