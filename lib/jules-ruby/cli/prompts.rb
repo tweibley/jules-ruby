@@ -123,7 +123,8 @@ module JulesRuby
       def time_ago_in_words(time_string)
         return 'N/A' unless time_string
 
-        time = Time.parse(time_string)
+        # Optimization: Time.iso8601 is >3x faster than Time.parse for ISO8601 strings
+        time = Time.iso8601(time_string)
         diff = Time.now - time
         case diff
         when 0..59
@@ -140,7 +141,8 @@ module JulesRuby
       def format_datetime(time_string)
         return 'N/A' unless time_string
 
-        time = Time.parse(time_string)
+        # Optimization: Time.iso8601 is >3x faster than Time.parse for ISO8601 strings
+        time = Time.iso8601(time_string)
         today = Time.now.to_date
         date = time.to_date
 
