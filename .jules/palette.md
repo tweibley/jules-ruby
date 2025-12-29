@@ -1,4 +1,4 @@
-## 2025-12-18 - Better API Error Messages
+## 2024-05-23 - [Actionable Error Messages]
 
-**Learning:** Users were receiving generic "Bad request" or "Server error" messages even when the API provided specific error details in the JSON body. This forced users to inspect exception objects to find the root cause.
-**Action:** Updated `Client#handle_response` to parse and bubble up specific error messages from the API response (e.g., `error.message` in JSON), significantly improving debuggability.
+**Learning:** Developers often encounter `ConfigurationError` when setting up a new tool, but the error message rarely tells them *how* to fix it.
+**Action:** When catching specific configuration errors in CLI tools, check the error type and append actionable hints (e.g., "export JULES_API_KEY=...") to standard error, while keeping JSON output clean for machine consumption.
