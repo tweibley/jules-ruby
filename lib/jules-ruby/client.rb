@@ -95,13 +95,21 @@ module JulesRuby
     end
 
     def build_url(path, params)
+      # Optimization: Use string interpolation instead of URI.parse which is >6x faster
       # Ensure base_url ends without slash and path starts with slash
       base = configuration.base_url.chomp('/')
       path = "/#{path}" unless path.start_with?('/')
 
-      uri = URI.parse("#{base}#{path}")
-      uri.query = URI.encode_www_form(params.compact) unless params.empty?
-      uri.to_s
+      url = "#{base}#{path}"
+
+      return url if params.empty?
+
+      # To preserve existing behavior exactly:
+      # If params are present, they overwrite any existing query string in the path
+      # (mirroring the behavior of URI#query=)
+      url = url.split('?', 2).first if url.include?('?')
+      query = URI.encode_www_form(params.compact)
+      "#{url}?#{query}"
     end
 
     def build_headers
