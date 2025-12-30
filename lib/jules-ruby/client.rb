@@ -61,10 +61,32 @@ module JulesRuby
     private
 
     def validate_configuration!
-      return if configuration.valid?
+      unless configuration.valid?
+        raise ConfigurationError,
+              'API key is required. Set JULES_API_KEY environment variable or pass api_key to Client.new'
+      end
 
-      raise ConfigurationError,
-            'API key is required. Set JULES_API_KEY environment variable or pass api_key to Client.new'
+      validate_base_url_security!
+    end
+
+    def validate_base_url_security!
+      uri = URI.parse(configuration.base_url)
+      return if uri.scheme == 'https'
+
+      # Allow http for localhost
+      return if uri.scheme == 'http' && local_host?(uri.host)
+
+      raise ConfigurationError, "Insecure base_url: #{configuration.base_url}. Use HTTPS or a local loopback address."
+    rescue URI::InvalidURIError
+      raise ConfigurationError, "Invalid base_url: #{configuration.base_url}"
+    end
+
+    def local_host?(host)
+      return true if host == 'localhost'
+      return true if host == '::1' || host == '[::1]'
+      return true if host.start_with?('127.')
+
+      false
     end
 
     def request(method, path, params: {}, body: nil)
