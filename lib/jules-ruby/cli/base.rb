@@ -3,6 +3,7 @@
 require 'thor'
 require 'json'
 require 'time'
+require 'jules-ruby/errors'
 
 module JulesRuby
   module Commands
@@ -22,7 +23,15 @@ module JulesRuby
           if options[:format] == 'json'
             puts JSON.generate({ error: error.message })
           else
-            warn "Error: #{error.message}"
+            # UX Improvement: Colored error label and helpful hints using Thor's built-in color
+            # Use shell.set_color to ensure we are using the shell's capabilities correctly
+            error_label = shell.set_color('Error:', :red)
+            warn "#{error_label} #{error.message}"
+
+            if error.is_a?(JulesRuby::ConfigurationError)
+              warn "\n  💡 Tip: Set JULES_API_KEY environment variable or check your config."
+              warn "     See https://developers.google.com/jules/api for more info."
+            end
           end
           exit 1
         end

@@ -1,4 +1,9 @@
-## 2025-12-18 - Better API Error Messages
+## 2024-05-23 - Actionable Error Messages
 
-**Learning:** Users were receiving generic "Bad request" or "Server error" messages even when the API provided specific error details in the JSON body. This forced users to inspect exception objects to find the root cause.
-**Action:** Updated `Client#handle_response` to parse and bubble up specific error messages from the API response (e.g., `error.message` in JSON), significantly improving debuggability.
+**Learning:** Developers often struggle with configuration errors when first setting up a CLI. Providing specific, actionable hints directly in the error output significantly improves the onboarding experience.
+**Action:** When catching known errors (like `ConfigurationError`), append a "Tip" section with specific environment variables to check and a link to documentation. Ensure this is done in a way that preserves JSON output for machine parsing.
+
+## 2024-05-23 - Thor vs External Coloring
+
+**Learning:** When working within a specific framework like Thor, use its built-in capabilities (e.g., `shell.set_color`) rather than introducing or using external libraries (like `Pastel`) for core functionality, even if they are available in the project. This keeps the core command logic robust and consistent with the framework's design.
+**Action:** Always check if the current framework provides the desired functionality before adding new dependencies or using peripheral ones. For Thor CLIs, use `shell.set_color` for output styling.
