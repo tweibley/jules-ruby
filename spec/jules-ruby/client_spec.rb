@@ -183,6 +183,24 @@ RSpec.describe JulesRuby::Client do
       result = client.get('/sessions', params: { pageSize: 10 })
       expect(result).to eq({})
     end
+
+    it 'correctly handles fragments with query params' do
+      # We must ensure that query params are inserted BEFORE the fragment
+      # URL: https://jules.googleapis.com/v1alpha/sessions#section?limit=10 (WRONG)
+      # URL: https://jules.googleapis.com/v1alpha/sessions?limit=10#section (RIGHT)
+
+      # Fragments are not sent to the server, so WebMock will see the URL without the fragment.
+      # If we placed the query params AFTER the fragment (wrong), Async::HTTP would treat them
+      # as part of the fragment and they would NOT appear in the request query.
+      # So proving that WebMock sees the query params proves we placed them correctly.
+
+      expected_request_url = 'https://jules.googleapis.com/v1alpha/sessions?limit=10'
+
+      stub_request(:get, expected_request_url)
+        .to_return(status: 200, body: '{}')
+
+      client.get('/sessions#section', params: { limit: 10 })
+    end
   end
 
   describe 'configuration overrides' do
