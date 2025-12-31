@@ -1,4 +1,4 @@
-## 2025-12-18 - Better API Error Messages
+## 2024-05-22 - Actionable Configuration Errors
 
-**Learning:** Users were receiving generic "Bad request" or "Server error" messages even when the API provided specific error details in the JSON body. This forced users to inspect exception objects to find the root cause.
-**Action:** Updated `Client#handle_response` to parse and bubble up specific error messages from the API response (e.g., `error.message` in JSON), significantly improving debuggability.
+**Learning:** Users often struggle with initial setup (like API keys). Providing a direct link to where they can solve the problem (e.g., developer console) significantly reduces friction. However, we must be careful not to corrupt machine-readable output (JSON) with human-readable hints.
+**Action:** When catching configuration errors in the CLI, append actionable hints (URLs, commands) only when in interactive/text mode. Suppress them for JSON output to ensure scripts don't break.
