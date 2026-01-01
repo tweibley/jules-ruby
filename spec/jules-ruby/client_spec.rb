@@ -183,6 +183,53 @@ RSpec.describe JulesRuby::Client do
       result = client.get('/sessions', params: { pageSize: 10 })
       expect(result).to eq({})
     end
+
+    # Added edge cases for coverage
+    it 'handles params with existing query in path (replace behavior)' do
+      # Stub for the replaced URL
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions?new=2')
+        .to_return(status: 200, body: '{}')
+
+      result = client.get('/sessions?old=1', params: { new: 2 })
+      expect(result).to eq({})
+    end
+
+    it 'handles existing query in path when params are empty (preserve behavior)' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions?old=1')
+        .to_return(status: 200, body: '{}')
+
+      result = client.get('/sessions?old=1', params: {})
+      expect(result).to eq({})
+    end
+
+    it 'handles params with fragments' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions?a=1')
+        .to_return(status: 200, body: '{}')
+
+      # WebMock ignores fragments in matching, but client sends URL.
+      # We check the constructed URL internally via send(:build_url) to verify fragment logic.
+      url = client.send(:build_url, '/sessions#frag', { a: 1 })
+      expect(url).to include('#frag')
+      expect(url).to include('?a=1')
+    end
+
+    it 'handles params with fragments and existing query' do
+      url = client.send(:build_url, '/sessions?old=1#frag', { new: 2 })
+      expect(url).to include('?new=2')
+      expect(url).to include('#frag')
+      expect(url).not_to include('old=1')
+    end
+
+    it 'handles fragments with empty string value' do
+      url = client.send(:build_url, '/sessions#', { a: 1 })
+      expect(url).to end_with('#')
+      expect(url).to include('?a=1')
+    end
+
+    it 'handles all-nil params as empty' do
+      url = client.send(:build_url, '/sessions', { a: nil })
+      expect(url).not_to include('?')
+    end
   end
 
   describe 'configuration overrides' do
