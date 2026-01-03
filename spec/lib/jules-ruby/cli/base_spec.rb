@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 require 'jules-ruby/cli/base'
+require 'jules-ruby/errors'
 
 # Test helper class defined outside RSpec block to avoid Lint/ConstantDefinitionInBlock
 class TestBaseCommand < JulesRuby::Commands::Base
@@ -45,6 +46,16 @@ RSpec.describe JulesRuby::Commands::Base do
       allow($stdout).to receive(:puts)
       expect { command.call_error(StandardError.new('fail')) }.to raise_error(SystemExit)
       expect($stdout).to have_received(:puts).with(include('"error":"fail"'))
+    end
+
+    it 'provides actionable hints for ConfigurationError' do
+      allow(command).to receive(:warn)
+      error = JulesRuby::ConfigurationError.new('missing api key')
+      expect { command.call_error(error) }.to raise_error(SystemExit)
+      expect(command).to have_received(:warn).with('Error: missing api key')
+      expect(command).to have_received(:warn).with("\nTo fix this:")
+      expect(command).to have_received(:warn).with("  export JULES_API_KEY='your_api_key_here'")
+      expect(command).to have_received(:warn).with("\nGet your API key at: https://developers.google.com/jules/api")
     end
   end
 end
