@@ -61,10 +61,22 @@ module JulesRuby
     private
 
     def validate_configuration!
+      validate_base_url!
+
       return if configuration.valid?
 
       raise ConfigurationError,
             'API key is required. Set JULES_API_KEY environment variable or pass api_key to Client.new'
+    end
+
+    def validate_base_url!
+      uri = URI.parse(configuration.base_url)
+      return if uri.scheme == 'https'
+
+      host = uri.host
+      return if host == 'localhost' || host == '::1' || host == '[::1]' || host&.start_with?('127.')
+
+      raise ConfigurationError, 'HTTPS is required for remote base_url'
     end
 
     def request(method, path, params: {}, body: nil)
