@@ -46,5 +46,14 @@ RSpec.describe JulesRuby::Commands::Base do
       expect { command.call_error(StandardError.new('fail')) }.to raise_error(SystemExit)
       expect($stdout).to have_received(:puts).with(include('"error":"fail"'))
     end
+
+    it 'provides actionable hints for ConfigurationError' do
+      allow(command).to receive(:warn)
+      error = JulesRuby::ConfigurationError.new('API key is required')
+      expect { command.call_error(error) }.to raise_error(SystemExit)
+      expect(command).to have_received(:warn).with('Error: API key is required')
+      expect(command).to have_received(:warn).with(/Tip: Export JULES_API_KEY/)
+      expect(command).to have_received(:warn).with(%r{https://developers.google.com/jules/api})
+    end
   end
 end
