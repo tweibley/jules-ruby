@@ -183,6 +183,31 @@ RSpec.describe JulesRuby::Client do
       result = client.get('/sessions', params: { pageSize: 10 })
       expect(result).to eq({})
     end
+
+    it 'replaces existing query params in path with new params' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .with(query: { pageSize: 10 })
+        .to_return(status: 200, body: '{}')
+
+      result = client.get('/sessions?old=1', params: { pageSize: 10 })
+      expect(result).to eq({})
+    end
+
+    it 'preserves fragments when adding params' do
+      stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
+        .with(query: { pageSize: 10 })
+        .to_return(status: 200, body: '{}')
+
+      # Async::HTTP::Internet#get might strip fragment before sending, but build_url should include it
+      # We check build_url directly here
+      url = client.send(:build_url, '/sessions#top', { pageSize: 10 })
+      expect(url).to eq('https://jules.googleapis.com/v1alpha/sessions?pageSize=10#top')
+    end
+
+    it 'preserves fragments when replacing query params' do
+      url = client.send(:build_url, '/sessions?old=1#top', { pageSize: 10 })
+      expect(url).to eq('https://jules.googleapis.com/v1alpha/sessions?pageSize=10#top')
+    end
   end
 
   describe 'configuration overrides' do
