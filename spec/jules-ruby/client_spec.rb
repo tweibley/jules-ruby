@@ -167,6 +167,13 @@ RSpec.describe JulesRuby::Client do
   end
 
   describe 'URL building' do
+    let(:base_url) { 'https://jules.googleapis.com/v1alpha' }
+
+    # Access private method for testing
+    def build_url(path, params = {})
+      client.send(:build_url, path, params)
+    end
+
     it 'handles paths without leading slash' do
       stub_request(:get, 'https://jules.googleapis.com/v1alpha/sessions')
         .to_return(status: 200, body: '{}')
@@ -182,6 +189,40 @@ RSpec.describe JulesRuby::Client do
 
       result = client.get('/sessions', params: { pageSize: 10 })
       expect(result).to eq({})
+    end
+
+    context 'fast path (string interpolation)' do
+      it 'constructs simple URL without params' do
+        expect(build_url('/sessions')).to eq("#{base_url}/sessions")
+      end
+
+      it 'constructs simple URL with params' do
+        url = build_url('/sessions', { pageToken: 'abc' })
+        expect(url).to eq("#{base_url}/sessions?pageToken=abc")
+      end
+
+      it 'encodes params correctly' do
+        url = build_url('/sessions', { q: 'hello world' })
+        expect(url).to eq("#{base_url}/sessions?q=hello+world")
+      end
+
+      it 'ignores nil params' do
+        url = build_url('/sessions', { a: 1, b: nil })
+        expect(url).to eq("#{base_url}/sessions?a=1")
+      end
+    end
+
+    context 'slow path (URI.parse)' do
+      it 'handles paths with existing query string' do
+        # URI.parse replaces existing query if params are present
+        expect(build_url('/sessions?foo=bar')).to eq("#{base_url}/sessions?foo=bar")
+        expect(build_url('/sessions?foo=bar', { baz: 'qux' })).to eq("#{base_url}/sessions?baz=qux")
+      end
+
+      it 'handles paths with fragments' do
+        expect(build_url('/sessions#frag')).to eq("#{base_url}/sessions#frag")
+        expect(build_url('/sessions#frag', { a: 1 })).to eq("#{base_url}/sessions?a=1#frag")
+      end
     end
   end
 
