@@ -23,6 +23,10 @@ module JulesRuby
             puts JSON.generate({ error: error.message })
           else
             warn "Error: #{error.message}"
+            if error.is_a?(JulesRuby::ConfigurationError)
+              warn "\nTip: Export JULES_API_KEY to your environment."
+              warn 'See https://developers.google.com/jules/api for more details.'
+            end
           end
           exit 1
         end
